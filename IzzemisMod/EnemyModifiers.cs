@@ -354,6 +354,7 @@ namespace Runecarved
             EnemyModifiers.EnsureRolled(__instance);
             EnemyModifierParticles.Ensure(__instance);
             EnemyModifierRegrowth.Update(__instance, dt);
+            EnemyModifierFiretread.UpdateEmitter(__instance, dt);
         }
     }
 

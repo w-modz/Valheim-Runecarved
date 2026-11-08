@@ -32,6 +32,43 @@ namespace Runecarved
     }
 
     [HarmonyPatch(typeof(HitData), nameof(HitData.ApplyResistance))]
+    internal static class EnemyModifierTarredPatch
+    {
+        private static readonly AccessTools.FieldRef<StatusEffect, float> EffectTime =
+            AccessTools.FieldRefAccess<StatusEffect, float>("m_time");
+
+        private static void Postfix(HitData __instance)
+        {
+            EnemyModifierDamageContextPatch.DamageContext context = EnemyModifierDamageContextPatch.Current;
+            if (context == null || !ReferenceEquals(context.Hit, __instance) ||
+                !context.Target.IsPlayer() || __instance.m_hitType != HitData.HitType.EnemyHit)
+            {
+                return;
+            }
+
+            foreach (EnemyModifierDefinition modifier in EnemyModifiers.GetModifiers(__instance.GetAttacker()))
+            {
+                if (!modifier.Tarred)
+                {
+                    continue;
+                }
+
+                SEMan effects = context.Target.GetSEMan();
+                StatusEffect tarred = effects.GetStatusEffect(SEMan.s_statusEffectTared);
+                if (tarred == null)
+                {
+                    tarred = effects.AddStatusEffect(SEMan.s_statusEffectTared);
+                }
+                if (tarred != null && EnemyModifierTiming.ShouldExtendTarred(tarred.m_ttl, tarred.GetRemaningTime()))
+                {
+                    EffectTime(tarred) = EnemyModifierTiming.TarredElapsed(tarred.m_ttl);
+                }
+                break;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(HitData), nameof(HitData.ApplyResistance))]
     internal static class EnemyModifierShatteringPatch
     {
         private static void Postfix(HitData __instance)

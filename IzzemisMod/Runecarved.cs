@@ -25,6 +25,7 @@ namespace Runecarved
 
             ModCommands.Register();
             RuneItems.Register();
+            EnemyModifierFiretread.Register();
             RuneGui.Bind(Config);
             RuneDrops.Bind(Config);
         }

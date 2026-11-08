@@ -30,6 +30,8 @@ namespace Runecarved
         internal int ExtraProjectiles { get; }
         internal float ProjectileSpeedMultiplier { get; }
         internal bool RequiresRanged { get; }
+        internal bool Firetread { get; }
+        internal bool Tarred { get; }
 
         internal EnemyModifierDefinition(
             string id,
@@ -45,7 +47,9 @@ namespace Runecarved
             float regenerationRate = 0f,
             int extraProjectiles = 0,
             float projectileSpeedMultiplier = 1f,
-            bool requiresRanged = false)
+            bool requiresRanged = false,
+            bool firetread = false,
+            bool tarred = false)
         {
             if (string.IsNullOrWhiteSpace(id) || id.IndexOf(',') >= 0)
             {
@@ -82,6 +86,8 @@ namespace Runecarved
             ExtraProjectiles = extraProjectiles;
             ProjectileSpeedMultiplier = projectileSpeedMultiplier;
             RequiresRanged = requiresRanged;
+            Firetread = firetread;
+            Tarred = tarred;
         }
     }
 
@@ -140,7 +146,13 @@ namespace Runecarved
                     extraProjectiles: 4, requiresRanged: true),
                 new EnemyModifierDefinition(
                     "quickshot", "$runecarved_enemy_quickshot", "Quickshot", 1f,
-                    projectileSpeedMultiplier: 1.5f, requiresRanged: true)
+                    projectileSpeedMultiplier: 1.5f, requiresRanged: true),
+                new EnemyModifierDefinition(
+                    "firetread", "$runecarved_enemy_firetread", "Firetread", 1f,
+                    firetread: true),
+                new EnemyModifierDefinition(
+                    "tarred", "$runecarved_enemy_tarred", "Tarred", 1f,
+                    tarred: true)
             });
 
         private static readonly Dictionary<string, EnemyModifierDefinition> ById = CreateLookup();

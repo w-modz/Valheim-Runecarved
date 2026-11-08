@@ -17,6 +17,8 @@ Enemy-only modifiers:
 - **Regrowth:** heals 2% of maximum health per second, including during combat, up to maximum health.
 - **Volley:** fires four extra full-damage projectiles in a spread for every projectile fired by an attack.
 - **Quickshot:** increases attack projectile speed by 50%.
+- **Firetread:** while moving, leaves a 1.5-meter-radius fire patch every 0.25 seconds, using scaled campfire flame visuals. Each patch lasts 8 seconds and hits players once per second for fire damage equal to 10% of the enemy's maximum health before fire resistance and armor. Fire damage is dealt through vanilla burning; if a hit is reduced below vanilla's burning threshold, it deals no damage. Overlapping patches from the same enemy do not stack. Firetread hits are environmental: they do not trigger attack modifiers or enemy difficulty damage scaling.
+- **Tarred:** landed hits on players, including fully blocked hits, apply vanilla Tarred for 10 seconds. Hits against an already Tarred player extend the remaining duration to at least 5 seconds without shortening a longer effect. Dodged hits do not apply it.
 
 Volley and Quickshot only roll for prefabs in the `RangedPrefabs` setting under `Enemy Modifiers` in the mod config. Edit the comma-separated prefab IDs to adjust the list; listed enemies still need a projectile attack for these effects to work. `spawn_mod` also rejects these modifiers for prefabs outside the list. Previously saved modifiers remain active if a prefab is later removed from the list.
 
@@ -115,7 +117,7 @@ spawn_mod Greydwarf fire_infusion poison_infusion
 
 The optional slot targets the equipped item. Supported slots are `weapon`, `bow`, `crossbow`, `magic`, `shield`, `armour`, `helmet`, `chest`, `legs`, and `cape`. Use `armour` only when exactly one armour piece is equipped. If the slot is omitted, the command runs only when exactly one supported item is equipped; otherwise, specify a slot. Modifier compatibility is checked for the selected item, and parry modifiers are unavailable on tower shields.
 
-For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, `shattering`, `regrowth`, `volley`, and `quickshot`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
+For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, `shattering`, `regrowth`, `volley`, `quickshot`, `firetread`, and `tarred`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
 
 ## Runes
 
