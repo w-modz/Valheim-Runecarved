@@ -6,6 +6,14 @@ Runecarved adds rarity tiers and per-item modifiers to existing Valheim equipmen
 
 Rarity limits are **Magic: 1 modifier**, **Rare: 2 modifiers**, and **Epic: 4 modifiers**. Rarity can be changed without losing an item's modifiers as long as the new tier's limit is not exceeded.
 
+## Enemy modifiers
+
+Enabled starred, untamed creatures with combat AI roll unique modifiers, up to one per star, shown beneath their healthbar. Creatures with active modifiers emit red particles. Rolls remain with the creature while it exists. Player summons are excluded, and modifiers are inactive while a creature is tamed. Eligible existing starred creatures receive a roll when they are loaded.
+
+**Fire Infusion**, **Poison Infusion**, **Frost Infusion**, and **Lightning Infusion** each add damage of their respective element equal to 25% of the attack's total damage before blocking and resistances. Each uses the original attack damage, so multiple infusions do not compound. A one-star creature randomly receives one infusion; a two-star creature receives two distinct infusions. The four infusions currently have equal roll weights. Existing rolls are preserved, and eligible creatures gain missing modifiers when the number of stars or the modifier pool increases.
+
+New modifiers are restricted to the enemy prefabs listed in `EnemyModifierAllowlist.cs`, grouped by biome. The initial list matches the normal rune-drop enemy table, including entries with zero rune-drop weight, and each prefab is enabled by default. Change its `true` or `false` value in that source list to set the default for new configs; existing config entries keep their saved values. In `BepInEx/config/com.izzemi.izzemismod.cfg`, each `Enemy Modifiers - <biome>` section has a `true`/`false` setting per prefab. Unlisted prefabs and bosses cannot receive new modifiers. Disabling a prefab prevents new rolls and `spawn_mod` use but keeps previously assigned modifiers active; excluded enemies do not gain additional modifiers until re-enabled. Tamed creatures and player summons remain ineligible. In multiplayer, use the same settings on all peers: the enemy's network owner controls new rolls.
+
 ## Modifier pools and value ranges
 
 Modifier values are not fixed: each one rolls within a range, in steps. Ranges are shown as weakest to strongest. Modifiers marked *fixed* do not roll. Commands default to the strongest value and can exceed the range.
@@ -64,13 +72,14 @@ Resistance modifiers are separate by damage type. For each type, the strongest r
 
 ## Console commands
 
-Open the in-game console and use the commands below. `set_rarity`, `modifier`, and `remove_modifier` only work when cheats are enabled (the vanilla `devcommands`).
+Open the in-game console and use the commands below. `set_rarity`, `modifier`, `remove_modifier`, and `spawn_mod` only work when cheats are enabled (the vanilla `devcommands`).
 
 | Command | Usage | Effect |
 | --- | --- | --- |
 | `set_rarity` | `set_rarity <magic\|rare\|epic\|0> [slot]` | Set rarity. Use `0` to clear rarity and all modifiers from the item. |
 | `modifier` | `modifier <modifier_name> [value] [slot]` | Add the named modifier at its strongest value, or at `value` if given. `value` uses tooltip units (`25` means 25% for percentage modifiers) and may exceed the normal range. The item must already have a rarity. |
 | `remove_modifier` | `remove_modifier <modifier_name> [slot]` | Remove that modifier from the item. |
+| `spawn_mod` | `spawn_mod <prefab> <modifier_id> [modifier_id]` | Spawn one eligible enemy with exactly the specified distinct modifiers and one star per modifier. |
 | `dump_item_data` | `dump_item_data` | Print local-player inventory item data for troubleshooting. |
 
 Examples:
@@ -83,9 +92,12 @@ modifier crossbow_reload crossbow
 modifier fire_resistance chest
 remove_modifier fire_resistance chest
 set_rarity 0 chest
+spawn_mod Greydwarf fire_infusion poison_infusion
 ```
 
 The optional slot targets the equipped item. Supported slots are `weapon`, `bow`, `crossbow`, `magic`, `shield`, `armour`, `helmet`, `chest`, `legs`, and `cape`. Use `armour` only when exactly one armour piece is equipped. If the slot is omitted, the command runs only when exactly one supported item is equipped; otherwise, specify a slot. Modifier compatibility is checked for the selected item, and parry modifiers are unavailable on tower shields.
+
+For `spawn_mod`, modifier IDs are `fire_infusion`, `poison_infusion`, `frost_infusion`, and `lightning_infusion`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
 
 ## Runes
 

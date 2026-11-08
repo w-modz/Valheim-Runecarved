@@ -41,16 +41,21 @@ Requirements: Windows, a Valheim install with BepInEx and [Jötunn](https://valh
 3. Build `Runecarved.sln` (for example `dotnet build Runecarved.sln`, or Build in Visual Studio). The build copies the plugin DLL into `MOD_DEPLOYPATH`.
 4. Start Valheim.
 
+### Adding enemy modifiers
+
+Define enemy modifiers in `IzzemisMod/EnemyModifierCatalog.cs` with a stable saved ID, localization token, display name, and nonnegative roll weight. A zero weight prevents new rolls without invalidating existing ones. Attack damage modifiers can provide an attack handler; other effect types need their own gameplay hooks. Keep existing IDs unchanged so saved enemies retain their rolls.
+
 ## Current features
 
 - Magic, Rare, and Epic rarity tiers with per-item modifiers for supported weapons, bows, crossbows, shields, armour, and magic weapons.
 - Custom rune items with unique sprites and models, plus an in-game rune interface for upgrading, rerolling, transferring, and sacrificing equipment; runes can drop from enemies and bosses.
 - Modifier effects cover combat, defense, movement, resource use, ranged attacks, magic, summons, and skills.
 - Persistent item data, modifier and rarity tooltips, rarity visuals, and preservation of item upgrades through crafting.
+- Enabled starred, untamed creatures with combat AI roll unique modifiers displayed under their healthbar and emit red particles. Enemy eligibility is configurable per prefab by biome. Fire, Poison, Frost, and Lightning Infusion each add 25% of attack damage as their respective element.
 
 For modifier pools, console commands, rune effects, and drop details, see the [mod description](MOD_DESCRIPTION.md).
 
 ## Not implemented yet
 
-- Additional random effects for enemies with stars, that increase their strength and dropped rewards.
+- Additional enemy modifiers and modifier-based rewards.
 - Legendary item variants rarely dropped from enemies, each with unique effects.

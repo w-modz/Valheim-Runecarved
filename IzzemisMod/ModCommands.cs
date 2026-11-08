@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using UnityEngine;
 
 namespace Runecarved
 {
@@ -12,6 +13,7 @@ namespace Runecarved
             CommandManager.Instance.AddConsoleCommand(new ModifierCommand());
             CommandManager.Instance.AddConsoleCommand(new RemoveModifierCommand());
             CommandManager.Instance.AddConsoleCommand(new DumpItemDataCommand());
+            CommandManager.Instance.AddConsoleCommand(new SpawnEnemyCommand());
         }
 
         private static bool IsWeaponCategory(ModifierItemCategory category)
@@ -238,6 +240,94 @@ namespace Runecarved
             }
 
             return count;
+        }
+
+        private sealed class SpawnEnemyCommand : ConsoleCommand
+        {
+            public override string Name => "spawn_mod";
+            public override bool IsCheat => true;
+            public override string Help =>
+                "Spawns an enemy with one star per modifier. Usage: spawn_mod <prefab> <modifier_id> [modifier_id].";
+
+            public override void Run(string[] args)
+            {
+                if (args.Length < 2)
+                {
+                    global::Console.instance.Print(Help);
+                    return;
+                }
+                if (args.Length > EnemyModifiers.MaxCommandModifiers + 1)
+                {
+                    global::Console.instance.Print($"A spawned enemy can have at most {EnemyModifiers.MaxCommandModifiers} stars.");
+                    return;
+                }
+
+                var modifiers = new List<EnemyModifierDefinition>();
+                var ids = new HashSet<string>(System.StringComparer.Ordinal);
+                for (int i = 1; i < args.Length; i++)
+                {
+                    string id = args[i].Trim().ToLowerInvariant();
+                    if (!EnemyModifierCatalog.TryGet(id, out EnemyModifierDefinition definition))
+                    {
+                        var validIds = new List<string>();
+                        foreach (EnemyModifierDefinition option in EnemyModifierCatalog.All)
+                        {
+                            validIds.Add(option.Id);
+                        }
+                        global::Console.instance.Print($"Unknown enemy modifier '{args[i]}'. Valid IDs: {string.Join(", ", validIds)}.");
+                        return;
+                    }
+                    if (!ids.Add(id))
+                    {
+                        global::Console.instance.Print($"Duplicate enemy modifier '{id}'. Each modifier must be distinct.");
+                        return;
+                    }
+                    modifiers.Add(definition);
+                }
+                if (Player.m_localPlayer == null || ZNetScene.instance == null)
+                {
+                    global::Console.instance.Print("A local player and network scene are required to spawn an enemy.");
+                    return;
+                }
+
+                GameObject prefab = ZNetScene.instance.GetPrefab(args[0]);
+                if (prefab == null)
+                {
+                    global::Console.instance.Print($"Unknown prefab '{args[0]}'.");
+                    return;
+                }
+                if (!EnemyModifiers.IsEligiblePrefab(prefab))
+                {
+                    global::Console.instance.Print($"Prefab '{args[0]}' is not an enabled, eligible untamed networked enemy.");
+                    return;
+                }
+
+                Transform player = Player.m_localPlayer.transform;
+                GameObject spawned = Object.Instantiate(prefab, player.position + player.forward * 2f + Vector3.up, Quaternion.identity);
+                ZNetView view = spawned.GetComponent<ZNetView>();
+                Character character = spawned.GetComponent<Character>();
+                if (view != null && view.IsValid() && view.IsOwner())
+                {
+                    view.GetZDO().SetCheated(!PlayerProfile.s_bypassCheatChecks);
+                }
+                if (!EnemyModifiers.TryAssign(character, modifiers, out string error))
+                {
+                    if (view != null && view.IsValid() && !view.IsOwner())
+                    {
+                        view.ClaimOwnership();
+                    }
+                    if (view != null && view.IsValid() && !view.IsOwner())
+                    {
+                        global::Console.instance.Print($"{error} Could not remove the spawned enemy because ownership could not be claimed.");
+                        return;
+                    }
+                    ZNetScene.instance.Destroy(spawned);
+                    global::Console.instance.Print($"{error} The spawned object was removed.");
+                    return;
+                }
+
+                global::Console.instance.Print($"Spawned '{args[0]}' with {modifiers.Count} star(s): {string.Join(", ", ids)}.");
+            }
         }
 
         private sealed class SetRarityCommand : ConsoleCommand

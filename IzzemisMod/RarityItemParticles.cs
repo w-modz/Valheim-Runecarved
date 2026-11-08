@@ -18,36 +18,47 @@ namespace Runecarved
             }
         }
 
-        public static void Ensure(Transform parent, Color color, Vector3 localPosition, float radius)
+        public static ParticleSystem Ensure(
+            Transform parent,
+            Color color,
+            Vector3 localPosition,
+            float radius,
+            string objectName = ParticleObjectName,
+            Vector3? shapeScale = null)
         {
-            Transform existing = parent.Find(ParticleObjectName);
+            Transform existing = parent.Find(objectName);
             ParticleSystem system = existing != null ? existing.GetComponent<ParticleSystem>() : null;
             if (system == null)
             {
-                system = CreateSystem(parent);
+                system = CreateSystem(parent, objectName);
                 if (system == null)
                 {
-                    return;
+                    return null;
                 }
             }
 
             system.transform.localPosition = localPosition;
             ParticleSystem.ShapeModule shape = system.shape;
             shape.radius = radius;
+            if (shapeScale.HasValue)
+            {
+                shape.scale = shapeScale.Value;
+            }
             ParticleSystem.MainModule main = system.main;
             main.startColor = color;
+            return system;
         }
 
-        public static void Remove(Transform parent)
+        public static void Remove(Transform parent, string objectName = ParticleObjectName)
         {
-            Transform existing = parent.Find(ParticleObjectName);
+            Transform existing = parent.Find(objectName);
             if (existing != null)
             {
                 Object.Destroy(existing.gameObject);
             }
         }
 
-        private static ParticleSystem CreateSystem(Transform parent)
+        private static ParticleSystem CreateSystem(Transform parent, string objectName)
         {
             Material material = RuneLootBeam.GetSharedMaterial();
             if (material == null)
@@ -55,7 +66,7 @@ namespace Runecarved
                 return null;
             }
 
-            GameObject particleObject = new GameObject(ParticleObjectName);
+            GameObject particleObject = new GameObject(objectName);
             particleObject.transform.SetParent(parent, false);
 
             ParticleSystem particles = particleObject.AddComponent<ParticleSystem>();

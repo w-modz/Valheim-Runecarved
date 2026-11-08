@@ -18,6 +18,8 @@ namespace Runecarved
 
         private void Awake()
         {
+            EnemyModifierCatalog.RegisterLocalization(ModLocalization);
+            EnemyModifierAllowlist.Bind(Config);
             new Harmony(PluginGUID).PatchAll();
 
             ModCommands.Register();
