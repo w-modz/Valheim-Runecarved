@@ -10,6 +10,7 @@ namespace Runecarved
         private const string PrefabName = "Runecarved_Firetread";
         private const string CampfirePrefabName = "fire_pit";
         private const float CampfireFlameRadius = 0.5f;
+        private const float FlareOpacityMultiplier = 0.25f;
         private const string SourceKey = "runecarved_firetread_source";
         private const string CreatedKey = "runecarved_firetread_created";
         private const string DamageKey = "runecarved_firetread_damage";
@@ -71,6 +72,20 @@ namespace Runecarved
                     {
                         smokeParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                         smoke.gameObject.SetActive(false);
+                    }
+
+                    Transform flare = visual.transform.Find("flare");
+                    ParticleSystem flareParticles = flare != null ? flare.GetComponent<ParticleSystem>() : null;
+                    if (flareParticles == null)
+                    {
+                        Jotunn.Logger.LogWarning("Cannot reduce Firetread flare: campfire flare particles were not found.");
+                    }
+                    else
+                    {
+                        ParticleSystem.MainModule main = flareParticles.main;
+                        Color color = main.startColor.color;
+                        color.a *= FlareOpacityMultiplier;
+                        main.startColor = color;
                     }
                 }
             }
