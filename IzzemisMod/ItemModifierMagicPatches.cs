@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 
@@ -171,6 +172,16 @@ namespace Runecarved
     [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
     internal static class ShieldOnUseModifierPatch
     {
+        private const float ShieldDuration = 20f;
+
+        private sealed class OriginalDuration
+        {
+            public float Value;
+        }
+
+        private static readonly ConditionalWeakTable<StatusEffect, OriginalDuration> ShortenedShields =
+            new ConditionalWeakTable<StatusEffect, OriginalDuration>();
+
         private static void Postfix(Humanoid __instance, bool __result)
         {
             if (!__result || __instance != Player.m_localPlayer)
@@ -198,8 +209,38 @@ namespace Runecarved
                 return;
             }
 
-            __instance.GetSEMan().AddStatusEffect(
+            SEMan effects = __instance.GetSEMan();
+            StatusEffect existing = effects.GetStatusEffect(shield.NameHash());
+            // Do not shorten a shield that was originally granted by the staff
+            bool shorten = existing == null || ShortenedShields.TryGetValue(existing, out _);
+            StatusEffect added = effects.AddStatusEffect(
                 shield, true, weapon.m_quality, __instance.GetSkillLevel(skill));
+            StatusEffect active = added != null ? added : existing;
+            if (shorten && active != null)
+            {
+                ShortenedShields.Remove(active);
+                ShortenedShields.Add(active, new OriginalDuration { Value = active.m_ttl });
+                active.m_ttl = ShieldDuration;
+            }
+        }
+
+        internal static void RestoreDuration(StatusEffect effect)
+        {
+            // A normal shield refresh must not inherit the modifier's shorter duration
+            if (ShortenedShields.TryGetValue(effect, out OriginalDuration duration))
+            {
+                effect.m_ttl = duration.Value;
+                ShortenedShields.Remove(effect);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(StatusEffect), nameof(StatusEffect.ResetTime))]
+    internal static class ShieldDurationResetPatch
+    {
+        private static void Postfix(StatusEffect __instance)
+        {
+            ShieldOnUseModifierPatch.RestoreDuration(__instance);
         }
     }
 
