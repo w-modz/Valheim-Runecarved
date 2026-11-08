@@ -18,7 +18,7 @@ Enemy-only modifiers:
 - **Volley:** fires four extra full-damage projectiles in a spread for every projectile fired by an attack.
 - **Quickshot:** increases attack projectile speed by 50%.
 - **Firetread:** while moving, leaves a 1.5-meter-radius fire patch every 0.25 seconds, using scaled campfire flame visuals. Each patch lasts 8 seconds and hits players once per second for fire damage equal to 10% of the enemy's maximum health before fire resistance and armor. Fire damage is dealt through vanilla burning; if a hit is reduced below vanilla's burning threshold, it deals no damage. Overlapping patches from the same enemy do not stack. Firetread hits are environmental: they do not trigger attack modifiers or enemy difficulty damage scaling.
-- **Tarred:** landed hits on players, including fully blocked hits, apply vanilla Tarred for 10 seconds. Hits against an already Tarred player extend the remaining duration to at least 5 seconds without shortening a longer effect. Dodged hits do not apply it.
+- **Tarred:** landed hits on players, including fully blocked hits, apply vanilla Tarred for 10 seconds. Hits against an already Tarred player extend the remaining duration to at least 10 seconds without shortening a longer effect.
 
 Volley and Quickshot only roll for prefabs in the `RangedPrefabs` setting under `Enemy Modifiers` in the mod config. Edit the comma-separated prefab IDs to adjust the list; listed enemies still need a projectile attack for these effects to work. `spawn_mod` also rejects these modifiers for prefabs outside the list. Previously saved modifiers remain active if a prefab is later removed from the list.
 
