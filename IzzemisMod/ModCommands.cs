@@ -267,12 +267,16 @@ namespace Runecarved
                 for (int i = 1; i < args.Length; i++)
                 {
                     string id = args[i].Trim().ToLowerInvariant();
-                    if (!EnemyModifierCatalog.TryGet(id, out EnemyModifierDefinition definition))
+                    if (!EnemyModifierCatalog.TryGet(id, out EnemyModifierDefinition definition) ||
+                        definition.Group == EnemyModifierGroup.Boss)
                     {
                         var validIds = new List<string>();
                         foreach (EnemyModifierDefinition option in EnemyModifierCatalog.All)
                         {
-                            validIds.Add(option.Id);
+                            if (option.Group != EnemyModifierGroup.Boss)
+                            {
+                                validIds.Add(option.Id);
+                            }
                         }
                         global::Console.instance.Print($"Unknown enemy modifier '{args[i]}'. Valid IDs: {string.Join(", ", validIds)}.");
                         return;

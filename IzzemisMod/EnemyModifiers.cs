@@ -67,7 +67,8 @@ namespace Runecarved
             var available = new List<EnemyModifierDefinition>();
             foreach (EnemyModifierDefinition definition in EnemyModifierCatalog.All)
             {
-                if (definition.Weight > 0f && !selected.Contains(definition))
+                if (definition.Group != EnemyModifierGroup.Boss &&
+                    definition.Weight > 0f && !selected.Contains(definition))
                 {
                     available.Add(definition);
                 }
@@ -150,7 +151,8 @@ namespace Runecarved
             foreach (EnemyModifierDefinition modifier in modifiers)
             {
                 if (modifier == null || !EnemyModifierCatalog.TryGet(modifier.Id, out EnemyModifierDefinition known) ||
-                    !ReferenceEquals(modifier, known) || !unique.Add(modifier.Id))
+                    !ReferenceEquals(modifier, known) || modifier.Group == EnemyModifierGroup.Boss ||
+                    !unique.Add(modifier.Id))
                 {
                     error = "Enemy modifiers must be known and distinct.";
                     return false;

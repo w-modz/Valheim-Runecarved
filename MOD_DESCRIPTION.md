@@ -10,7 +10,17 @@ Rarity limits are **Magic: 1 modifier**, **Rare: 2 modifiers**, and **Epic: 4 mo
 
 Enabled starred, untamed creatures with combat AI roll unique modifiers, up to one per star, shown beneath their healthbar. Creatures with active modifiers emit red particles. Rolls remain with the creature while it exists. Player summons are excluded, and modifiers are inactive while a creature is tamed. Eligible existing starred creatures receive a roll when they are loaded.
 
-**Fire Infusion**, **Poison Infusion**, **Frost Infusion**, and **Lightning Infusion** each add damage of their respective element equal to 25% of the attack's total damage before blocking and resistances. Each uses the original attack damage, so multiple infusions do not compound. A one-star creature randomly receives one infusion; a two-star creature receives two distinct infusions. The four infusions currently have equal roll weights. Existing rolls are preserved, and eligible creatures gain missing modifiers when the number of stars or the modifier pool increases.
+**Fire Infusion**, **Poison Infusion**, **Frost Infusion**, and **Lightning Infusion** each add damage of their respective element equal to 25% of the attack's total damage before blocking and resistances. Each uses the original attack damage, so multiple infusions do not compound.
+
+Shared modifiers can also roll on eligible enemies:
+
+- **Fire, Poison, Frost, and Lightning Ward:** 50% less damage from the named element.
+- **Blunt, Pierce, and Slash Ironhide:** 75% less damage from the named physical damage type.
+- **Fleeting:** 25% faster movement, including swimming and flying; attack speed is unchanged.
+- **Armored:** 25% less damage taken, including damage-over-time ticks.
+- **Shattering:** successful damaging hits stagger players, including elemental-only hits. Dodged and fully blocked hits do not trigger it.
+
+Wards and Ironhide multiply the damage remaining after vanilla resistance and armor; Armored multiplies damage at the same stage. These reductions multiply together. A one-star enemy randomly receives one modifier, and a two-star enemy receives two distinct modifiers from the enemy and shared pools. All currently have equal roll weights. Existing rolls are preserved, and eligible creatures gain missing modifiers when the number of stars or the modifier pool increases. Boss-specific rolls are not yet implemented.
 
 New modifiers are restricted to the enemy prefabs listed in `EnemyModifierAllowlist.cs`, grouped by biome. The initial list matches the normal rune-drop enemy table, including entries with zero rune-drop weight, and each prefab is enabled by default. Change its `true` or `false` value in that source list to set the default for new configs; existing config entries keep their saved values. In `BepInEx/config/com.izzemi.izzemismod.cfg`, each `Enemy Modifiers - <biome>` section has a `true`/`false` setting per prefab. Unlisted prefabs and bosses cannot receive new modifiers. Disabling a prefab prevents new rolls and `spawn_mod` use but keeps previously assigned modifiers active; excluded enemies do not gain additional modifiers until re-enabled. Tamed creatures and player summons remain ineligible. In multiplayer, use the same settings on all peers: the enemy's network owner controls new rolls.
 
@@ -97,7 +107,7 @@ spawn_mod Greydwarf fire_infusion poison_infusion
 
 The optional slot targets the equipped item. Supported slots are `weapon`, `bow`, `crossbow`, `magic`, `shield`, `armour`, `helmet`, `chest`, `legs`, and `cape`. Use `armour` only when exactly one armour piece is equipped. If the slot is omitted, the command runs only when exactly one supported item is equipped; otherwise, specify a slot. Modifier compatibility is checked for the selected item, and parry modifiers are unavailable on tower shields.
 
-For `spawn_mod`, modifier IDs are `fire_infusion`, `poison_infusion`, `frost_infusion`, and `lightning_infusion`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
+For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, and `shattering`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
 
 ## Runes
 

@@ -47,7 +47,7 @@ Requirements: Windows, a Valheim install with BepInEx and [Jötunn](https://valh
 - Custom rune items with unique sprites and models, plus an in-game rune interface for upgrading, rerolling, transferring, and sacrificing equipment; runes can drop from enemies and bosses.
 - Modifier effects cover combat, defense, movement, resource use, ranged attacks, magic, summons, and skills.
 - Persistent item data, modifier and rarity tooltips, rarity visuals, and preservation of item upgrades through crafting.
-- Enabled starred, untamed creatures with combat AI roll unique modifiers displayed under their healthbar and emit red particles. Enemy eligibility is configurable per prefab by biome. Fire, Poison, Frost, and Lightning Infusion each add 25% of attack damage as their respective element.
+- Enabled starred, untamed creatures with combat AI roll unique modifiers displayed under their healthbar and emit red particles. Enemy eligibility is configurable per prefab by biome. Modifiers include elemental infusions and wards, physical resistances, movement speed, damage reduction, and stagger.
 
 For modifier pools, console commands, rune effects, and drop details, see the [mod description](MOD_DESCRIPTION.md).
 

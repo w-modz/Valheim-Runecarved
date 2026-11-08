@@ -43,7 +43,8 @@ namespace Runecarved
             {
                 foreach (EnemyModifierDefinition definition in EnemyModifierCatalog.All)
                 {
-                    if (position != 3 || !definition.Id.Equals(parts[2], StringComparison.OrdinalIgnoreCase))
+                    if (definition.Group != EnemyModifierGroup.Boss &&
+                        (position != 3 || !definition.Id.Equals(parts[2], StringComparison.OrdinalIgnoreCase)))
                     {
                         options.Add(definition.Id);
                     }
