@@ -7,6 +7,7 @@ namespace Runecarved
 {
     internal static class EnemyModifierAllowlist
     {
+        // Keys must match Utils.GetPrefabName output; DefaultEnabled sets only the initial config value
         private static readonly Dictionary<string, (string Biome, bool DefaultEnabled)> Enemies =
             new Dictionary<string, (string, bool)>(StringComparer.Ordinal)
         {
@@ -94,6 +95,7 @@ namespace Runecarved
         internal static bool IsAllowed(GameObject enemy)
         {
             string prefabName = Utils.GetPrefabName(enemy);
+            // Unknown prefab names are not allowed to receive new modifiers
             return Allowed.TryGetValue(prefabName, out ConfigEntry<bool> enabled) && enabled.Value;
         }
     }

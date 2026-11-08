@@ -66,6 +66,7 @@ namespace Runecarved
                     }
                     else
                     {
+                        // Keep unknown IDs visible so modifiers from a newer version are not hidden in tooltips
                         string name = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
                             modifier.Id.Replace('_', ' ').ToLowerInvariant());
                         string value = modifier.Value.ToString(

@@ -32,6 +32,7 @@ namespace Runecarved
             timer.elapsed += dt;
             if (timer.elapsed >= 1f)
             {
+                // Heal whole elapsed seconds and carry the fractional remainder into the next update
                 float seconds = Mathf.Floor(timer.elapsed);
                 timer.elapsed -= seconds;
                 character.Heal(character.GetMaxHealth() * rate * seconds, false);

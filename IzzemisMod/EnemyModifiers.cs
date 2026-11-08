@@ -47,6 +47,7 @@ namespace Runecarved
             }
 
             ZDO zdo = view.GetZDO();
+            // Each star beyond level one grants one modifier, up to the catalog size
             int desired = Math.Min(zdo.GetInt(ZDOVars.s_level, 1) - 1, EnemyModifierCatalog.All.Count);
             IReadOnlyList<EnemyModifierDefinition> existing = NoModifiers;
             if (zdo.GetString(DataKey, out string data))
@@ -253,6 +254,7 @@ namespace Runecarved
                 }
                 if (!EnemyModifierCatalog.TryGet(id, out _))
                 {
+                    // Keep the saved roll intact so an older mod version cannot overwrite newer modifier IDs
                     hasUnknown = true;
                     WarnInvalidData($"Unknown enemy modifier '{id}' in saved data; preserving the saved roll.");
                 }

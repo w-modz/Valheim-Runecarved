@@ -207,6 +207,7 @@ namespace Runecarved
                 return;
             }
 
+            // BlockAttack reads these shared values, so restore them in the finalizer after the call
             if (ModifierCatalog.TryGetModifierValue(
                     blocker,
                     ModifierEffectType.ParryBonus,

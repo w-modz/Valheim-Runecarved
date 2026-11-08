@@ -53,6 +53,7 @@ namespace Runecarved
                 }
 
                 string key = "";
+                // Gate Hildir's later-tier offers using the same unlock keys as her treasure chests
                 if (offer.Chest != null && !TryGetChestKey(__instance, offer.Chest, out key))
                 {
                     WarnOnce(offer.Chest, $"Could not find Hildir's unlock key for {offer.Chest}; its rune offers are unavailable.");

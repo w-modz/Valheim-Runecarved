@@ -318,6 +318,7 @@ namespace Runecarved
 
             KeyUI[] current = (KeyUI[])modifiersField.GetValue(null);
             List<KeyUI> vanillaModifiers = new List<KeyUI>(current.Length);
+            // Custom settings are loaded and saved separately, so exclude them from vanilla preset handling
             foreach (KeyUI modifier in current)
             {
                 if (modifier.gameObject.name != "RunecarvedRuneDropRate" &&

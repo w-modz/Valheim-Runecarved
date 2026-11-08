@@ -109,6 +109,7 @@ namespace Runecarved
             Player player = Player.m_localPlayer;
             if (string.IsNullOrWhiteSpace(slotArgument))
             {
+                // Require a slot when multiple supported items are equipped to avoid modifying the wrong one
                 List<ItemDrop.ItemData> equippedItems = GetSupportedEquippedItems(player);
                 if (equippedItems.Count == 1)
                 {

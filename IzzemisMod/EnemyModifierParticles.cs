@@ -43,6 +43,7 @@ namespace Runecarved
                 return;
             }
 
+            // Throttle network and modifier checks instead of repeating them on every frame
             nextSync = Time.time + SyncInterval;
             ZDO zdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(character.GetZDOID()) : null;
             if (character.IsDead() || zdo == null || !zdo.HasOwner() ||

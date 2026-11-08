@@ -32,6 +32,7 @@ namespace Runecarved
                 return;
             }
 
+            // The world setting changes rune count only; the chest's 25% chance remains fixed
             int runeCount = (int)RuneDropModifier.Chest.GetMultiplier();
             for (int i = 0; i < runeCount; i++)
             {

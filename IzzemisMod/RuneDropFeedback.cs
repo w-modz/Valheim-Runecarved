@@ -109,6 +109,7 @@ namespace Runecarved
                 return;
             }
 
+            // Keep the ward's sound while suppressing its unrelated visuals at the rune's location
             DisableVisualEffects(soundInstance);
             float lifetime = 1f;
             foreach (ZSFX sound in sounds)

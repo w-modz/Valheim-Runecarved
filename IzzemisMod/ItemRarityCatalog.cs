@@ -34,6 +34,7 @@ namespace Runecarved
     {
         private static readonly ItemRarityDefinition[] Definitions =
         {
+            // Rank selects the strongest equipped glow and MaxModifiers sets the allowed modifier count
             new ItemRarityDefinition("magic", "Magic", "green", new Color(0.2f, 1f, 0.35f), 1, 1),
             new ItemRarityDefinition("rare", "Rare", "blue", new Color(0.25f, 0.55f, 1f), 2, 2),
             new ItemRarityDefinition("epic", "Epic", "purple", new Color(0.75f, 0.3f, 1f), 3, 4)

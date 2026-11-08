@@ -6,6 +6,7 @@ namespace Runecarved
     {
         private const float BeamHeight = 4f;
         private static bool missingShaderWarningLogged;
+        // Shared by beams and item particles to avoid creating a material for each effect
         private static Material beamMaterial;
 
         private Color color;

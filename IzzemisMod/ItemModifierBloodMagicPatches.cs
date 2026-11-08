@@ -22,6 +22,7 @@ namespace Runecarved
                 return 0f;
             }
 
+            // Mirror the game's skill-based blood cost discount before applying modifier effects
             float skillFactor = character.GetSkillFactor(weapon.m_shared.m_skillType);
             return Math.Max(0f, cost - cost * 0.33f * skillFactor);
         }

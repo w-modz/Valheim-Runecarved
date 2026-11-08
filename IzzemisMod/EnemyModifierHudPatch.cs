@@ -50,6 +50,7 @@ namespace Runecarved
             {
                 UpdateLabel(gui.transform, health, row++, modifier.DisplayToken);
             }
+            // Reuse label objects across HUD refreshes and hide any rows left over from a larger modifier set
             for (; row < EnemyModifierCatalog.All.Count; row++)
             {
                 Transform unused = health.Find(LabelName + row);
@@ -114,6 +115,7 @@ namespace Runecarved
             float spacing = Mathf.Max(first.rect.height, second.rect.height) + 1f;
             for (int i = 0; i < 6; i++)
             {
+                // Extra icons are reused as enemy levels change instead of being recreated every HUD update
                 string name = "RunecarvedExtraStar" + i;
                 Transform extra = level.Find(name);
                 if (extra == null && i < extraStars)

@@ -60,6 +60,7 @@ namespace Runecarved
 
         private static ParticleSystem CreateSystem(Transform parent, string objectName)
         {
+            // Reuse the loot beam material so rarity effects do not allocate another particle material
             Material material = RuneLootBeam.GetSharedMaterial();
             if (material == null)
             {

@@ -52,6 +52,7 @@ namespace Runecarved
 
             EquippedRarityParticles.Ensure(humanoid);
 
+            // Use the highest equipped rarity to represent all equipped items with one glow
             ItemRarityDefinition highestRarity = null;
             var inventory = humanoid.GetInventory();
             if (inventory != null)
@@ -91,6 +92,7 @@ namespace Runecarved
 
             foreach (InventoryElement element in elements)
             {
+                // Inventory UI elements are reused, so clear prior rarity outlines before applying the current items
                 Outline existingOutline = element.m_icon.GetComponent<Outline>();
                 if (existingOutline != null)
                 {

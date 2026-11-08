@@ -46,6 +46,7 @@ namespace Runecarved
 
         private static void Postfix(State __state)
         {
+            // Upgrading replaces the source item, so locate the newly added matching item and copy its metadata
             if (!__state.Active ||
                 ContainsReference(
                     __state.Player.GetInventory().GetAllItems(),

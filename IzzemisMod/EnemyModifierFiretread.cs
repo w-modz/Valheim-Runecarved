@@ -174,6 +174,7 @@ namespace Runecarved
             {
                 return;
             }
+            // Limit each fire patch to one hit per player per source each second
             LastHits[source] = now;
             var stale = new List<ZDOID>();
             foreach (KeyValuePair<ZDOID, double> entry in LastHits)

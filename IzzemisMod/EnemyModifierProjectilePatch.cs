@@ -25,6 +25,7 @@ namespace Runecarved
                 if (instruction.Calls(setup))
                 {
                     var loadAttack = new CodeInstruction(OpCodes.Ldarg_0);
+                    // Keep branches and exception handlers attached to the injected instruction
                     loadAttack.labels.AddRange(instruction.labels);
                     instruction.labels.Clear();
                     loadAttack.blocks.AddRange(instruction.blocks);
@@ -40,6 +41,7 @@ namespace Runecarved
             }
             if (matches != 1)
             {
+                // Fail and throw exception if a game update changes the method shape instead of skipping the patch
                 throw new InvalidOperationException($"Expected one projectile setup in FireProjectileBurst, found {matches}.");
             }
             return result;
@@ -70,6 +72,7 @@ namespace Runecarved
                 return;
             }
             ItemDrop.ItemData equippedAmmo = AmmoItem(attack);
+            // Ammo-specific prefabs take precedence, with the attack prefab as the vanilla fallback
             GameObject prefab = equippedAmmo != null && equippedAmmo.m_shared.m_attack.m_attackProjectile != null
                 ? equippedAmmo.m_shared.m_attack.m_attackProjectile
                 : attack.m_attackProjectile;

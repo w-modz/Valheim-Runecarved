@@ -25,6 +25,7 @@ namespace Runecarved
             }
 
             bool newArgument = text.EndsWith(" ", StringComparison.Ordinal);
+            // A trailing space means completion should suggest values for the next argument
             int position = newArgument ? parts.Length : parts.Length - 1;
             word = newArgument ? "" : parts[parts.Length - 1];
             options = new List<string>();
