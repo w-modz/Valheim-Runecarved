@@ -12,6 +12,14 @@ Enabled starred, untamed creatures with combat AI roll unique modifiers, up to o
 
 **Fire Infusion**, **Poison Infusion**, **Frost Infusion**, and **Lightning Infusion** each add damage of their respective element equal to 25% of the attack's total damage before blocking and resistances. Each uses the original attack damage, so multiple infusions do not compound.
 
+Enemy-only modifiers:
+
+- **Regrowth:** heals 2% of maximum health per second, including during combat, up to maximum health.
+- **Volley:** fires four extra full-damage projectiles in a spread for every projectile fired by an attack.
+- **Quickshot:** increases attack projectile speed by 50%.
+
+Volley and Quickshot only roll for prefabs in the `RangedPrefabs` setting under `Enemy Modifiers` in the mod config. Edit the comma-separated prefab IDs to adjust the list; listed enemies still need a projectile attack for these effects to work. `spawn_mod` also rejects these modifiers for prefabs outside the list. Previously saved modifiers remain active if a prefab is later removed from the list.
+
 Shared modifiers can also roll on eligible enemies:
 
 - **Fire, Poison, Frost, and Lightning Ward:** 50% less damage from the named element.
@@ -107,7 +115,7 @@ spawn_mod Greydwarf fire_infusion poison_infusion
 
 The optional slot targets the equipped item. Supported slots are `weapon`, `bow`, `crossbow`, `magic`, `shield`, `armour`, `helmet`, `chest`, `legs`, and `cape`. Use `armour` only when exactly one armour piece is equipped. If the slot is omitted, the command runs only when exactly one supported item is equipped; otherwise, specify a slot. Modifier compatibility is checked for the selected item, and parry modifiers are unavailable on tower shields.
 
-For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, and `shattering`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
+For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, `shattering`, `regrowth`, `volley`, and `quickshot`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
 
 ## Runes
 

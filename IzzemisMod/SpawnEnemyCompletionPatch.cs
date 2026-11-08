@@ -41,9 +41,13 @@ namespace Runecarved
             }
             else if (position >= 2 && position <= EnemyModifiers.MaxCommandModifiers + 1)
             {
+                GameObject prefab = ZNetScene.instance != null && parts.Length > 1
+                    ? ZNetScene.instance.GetPrefab(parts[1])
+                    : null;
                 foreach (EnemyModifierDefinition definition in EnemyModifierCatalog.All)
                 {
                     if (definition.Group != EnemyModifierGroup.Boss &&
+                        (prefab == null || EnemyModifiers.IsCompatible(definition, prefab)) &&
                         (position != 3 || !definition.Id.Equals(parts[2], StringComparison.OrdinalIgnoreCase)))
                     {
                         options.Add(definition.Id);

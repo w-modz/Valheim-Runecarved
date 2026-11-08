@@ -26,6 +26,10 @@ namespace Runecarved
         internal float MovementMultiplier { get; }
         internal float DamageTakenMultiplier { get; }
         internal bool Shattering { get; }
+        internal float RegenerationRate { get; }
+        internal int ExtraProjectiles { get; }
+        internal float ProjectileSpeedMultiplier { get; }
+        internal bool RequiresRanged { get; }
 
         internal EnemyModifierDefinition(
             string id,
@@ -37,7 +41,11 @@ namespace Runecarved
             EnemyResistanceEffect resistanceEffect = null,
             float movementMultiplier = 1f,
             float damageTakenMultiplier = 1f,
-            bool shattering = false)
+            bool shattering = false,
+            float regenerationRate = 0f,
+            int extraProjectiles = 0,
+            float projectileSpeedMultiplier = 1f,
+            bool requiresRanged = false)
         {
             if (string.IsNullOrWhiteSpace(id) || id.IndexOf(',') >= 0)
             {
@@ -52,7 +60,10 @@ namespace Runecarved
                 throw new ArgumentOutOfRangeException(nameof(weight), "Enemy modifier weights must be finite and nonnegative.");
             }
             if (float.IsNaN(movementMultiplier) || float.IsInfinity(movementMultiplier) || movementMultiplier < 0f ||
-                float.IsNaN(damageTakenMultiplier) || float.IsInfinity(damageTakenMultiplier) || damageTakenMultiplier < 0f)
+                float.IsNaN(damageTakenMultiplier) || float.IsInfinity(damageTakenMultiplier) || damageTakenMultiplier < 0f ||
+                float.IsNaN(regenerationRate) || float.IsInfinity(regenerationRate) || regenerationRate < 0f ||
+                float.IsNaN(projectileSpeedMultiplier) || float.IsInfinity(projectileSpeedMultiplier) || projectileSpeedMultiplier < 0f ||
+                extraProjectiles < 0)
             {
                 throw new ArgumentOutOfRangeException("Enemy modifier multipliers must be finite and nonnegative.");
             }
@@ -67,6 +78,10 @@ namespace Runecarved
             MovementMultiplier = movementMultiplier;
             DamageTakenMultiplier = damageTakenMultiplier;
             Shattering = shattering;
+            RegenerationRate = regenerationRate;
+            ExtraProjectiles = extraProjectiles;
+            ProjectileSpeedMultiplier = projectileSpeedMultiplier;
+            RequiresRanged = requiresRanged;
         }
     }
 
@@ -116,7 +131,16 @@ namespace Runecarved
                     group: EnemyModifierGroup.Shared, damageTakenMultiplier: 0.75f),
                 new EnemyModifierDefinition(
                     "shattering", "$runecarved_enemy_shattering", "Shattering", 1f,
-                    group: EnemyModifierGroup.Shared, shattering: true)
+                    group: EnemyModifierGroup.Shared, shattering: true),
+                new EnemyModifierDefinition(
+                    "regrowth", "$runecarved_enemy_regrowth", "Regrowth", 1f,
+                    regenerationRate: 0.02f),
+                new EnemyModifierDefinition(
+                    "volley", "$runecarved_enemy_volley", "Volley", 1f,
+                    extraProjectiles: 4, requiresRanged: true),
+                new EnemyModifierDefinition(
+                    "quickshot", "$runecarved_enemy_quickshot", "Quickshot", 1f,
+                    projectileSpeedMultiplier: 1.5f, requiresRanged: true)
             });
 
         private static readonly Dictionary<string, EnemyModifierDefinition> ById = CreateLookup();

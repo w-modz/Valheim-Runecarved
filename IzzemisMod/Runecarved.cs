@@ -20,6 +20,7 @@ namespace Runecarved
         {
             EnemyModifierCatalog.RegisterLocalization(ModLocalization);
             EnemyModifierAllowlist.Bind(Config);
+            EnemyModifierRangedList.Bind(Config);
             new Harmony(PluginGUID).PatchAll();
 
             ModCommands.Register();

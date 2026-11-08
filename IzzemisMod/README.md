@@ -43,7 +43,7 @@ Requirements: Windows, a Valheim install with BepInEx and [Jötunn](https://valh
 
 ### Adding enemy modifiers
 
-Define enemy modifiers in `EnemyModifierCatalog.cs` with a stable saved ID, localization token, display name, group, and nonnegative roll weight. Enemy and Shared modifiers roll on eligible normal enemies; boss rolling is not yet implemented. A zero weight prevents new rolls without invalidating existing ones. Existing hooks support attack damage, resistance, movement, damage taken, and stagger; other effect types need their own gameplay hooks. Keep existing IDs unchanged so saved enemies retain their rolls.
+Define enemy modifiers in `EnemyModifierCatalog.cs` with a stable saved ID, localization token, display name, group, and nonnegative roll weight. Enemy and Shared modifiers roll on eligible normal enemies; boss rolling is not yet implemented. A zero weight prevents new rolls without invalidating existing ones. Existing hooks support attack damage, resistance, movement, damage taken, stagger, regeneration, and projectiles; other effect types need their own gameplay hooks. Keep existing IDs unchanged so saved enemies retain their rolls.
 
 ## Current features
 

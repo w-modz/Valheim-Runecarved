@@ -305,6 +305,14 @@ namespace Runecarved
                     global::Console.instance.Print($"Prefab '{args[0]}' is not an enabled, eligible untamed networked enemy.");
                     return;
                 }
+                foreach (EnemyModifierDefinition modifier in modifiers)
+                {
+                    if (!EnemyModifiers.IsCompatible(modifier, prefab))
+                    {
+                        global::Console.instance.Print($"Enemy modifier '{modifier.Id}' requires a ranged enemy; '{args[0]}' is not in the ranged prefab list.");
+                        return;
+                    }
+                }
 
                 Transform player = Player.m_localPlayer.transform;
                 GameObject spawned = Object.Instantiate(prefab, player.position + player.forward * 2f + Vector3.up, Quaternion.identity);

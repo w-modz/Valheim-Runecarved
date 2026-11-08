@@ -67,7 +67,7 @@ namespace Runecarved
             var available = new List<EnemyModifierDefinition>();
             foreach (EnemyModifierDefinition definition in EnemyModifierCatalog.All)
             {
-                if (definition.Group != EnemyModifierGroup.Boss &&
+                if (IsCompatible(definition, character.gameObject) &&
                     definition.Weight > 0f && !selected.Contains(definition))
                 {
                     available.Add(definition);
@@ -113,6 +113,12 @@ namespace Runecarved
                 (character.m_nViewOverride == null || character.m_nViewOverride == view);
         }
 
+        internal static bool IsCompatible(EnemyModifierDefinition modifier, GameObject prefab)
+        {
+            return modifier.Group != EnemyModifierGroup.Boss &&
+                (!modifier.RequiresRanged || EnemyModifierRangedList.IsRanged(prefab));
+        }
+
         internal static bool TryAssign(Character character, IReadOnlyList<EnemyModifierDefinition> modifiers, out string error)
         {
             error = null;
@@ -155,6 +161,11 @@ namespace Runecarved
                     !unique.Add(modifier.Id))
                 {
                     error = "Enemy modifiers must be known and distinct.";
+                    return false;
+                }
+                if (!IsCompatible(modifier, character.gameObject))
+                {
+                    error = $"Enemy modifier '{modifier.Id}' requires a ranged enemy.";
                     return false;
                 }
                 ids.Add(modifier.Id);
@@ -338,10 +349,11 @@ namespace Runecarved
     [HarmonyPatch(typeof(Character), nameof(Character.CustomFixedUpdate))]
     internal static class EnemyModifierOwnershipPatch
     {
-        private static void Postfix(Character __instance)
+        private static void Postfix(Character __instance, float dt)
         {
             EnemyModifiers.EnsureRolled(__instance);
             EnemyModifierParticles.Ensure(__instance);
+            EnemyModifierRegrowth.Update(__instance, dt);
         }
     }
 
