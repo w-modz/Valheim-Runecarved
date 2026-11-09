@@ -123,7 +123,7 @@ namespace Runecarved
         internal static bool TryAssign(Character character, IReadOnlyList<EnemyModifierDefinition> modifiers, out string error)
         {
             error = null;
-            if (character == null || character.IsPlayer() ||
+            if (character == null || EnemyModifierSummoner.IsSummon(character) || character.IsPlayer() ||
                 !(character.GetBaseAI() is MonsterAI) ||
                 character.GetFaction() == Character.Faction.PlayerSpawned)
             {
@@ -286,7 +286,7 @@ namespace Runecarved
 
         private static bool IsEligible(Character character)
         {
-            if (character == null || character.IsPlayer() ||
+            if (character == null || EnemyModifierSummoner.IsSummon(character) || character.IsPlayer() ||
                 !(character.GetBaseAI() is MonsterAI) ||
                 character.GetFaction() == Character.Faction.PlayerSpawned)
             {
@@ -335,6 +335,7 @@ namespace Runecarved
     {
         private static void Postfix(Character __instance)
         {
+            EnemyModifierShields.Register(__instance);
             EnemyModifiers.EnsureRolled(__instance);
         }
     }
@@ -357,6 +358,9 @@ namespace Runecarved
             EnemyModifierParticles.Ensure(__instance);
             EnemyModifierRegrowth.Update(__instance, dt);
             EnemyModifierFiretread.UpdateEmitter(__instance, dt);
+            EnemyModifierCombatAbilities.UpdateCaster(__instance);
+            EnemyModifierShields.Update(__instance);
+            EnemyModifierSummoner.UpdateSummoner(__instance, dt);
         }
     }
 

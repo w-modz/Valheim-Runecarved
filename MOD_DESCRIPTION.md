@@ -19,8 +19,19 @@ Enemy-only modifiers:
 - **Quickshot:** increases attack projectile speed by 50%.
 - **Firetread:** while moving, leaves a 1.5-meter-radius fire patch every 0.25 seconds, using scaled campfire flame visuals. Each patch lasts 8 seconds and hits players once per second for fire damage equal to 10% of the enemy's maximum health before fire resistance and armor. Fire damage is dealt through vanilla burning; if a hit is reduced below vanilla's burning threshold, it deals no damage. Overlapping patches from the same enemy do not stack. Firetread hits are environmental: they do not trigger attack modifiers or enemy difficulty damage scaling.
 - **Tarred:** landed hits on players, including fully blocked hits, apply vanilla Tarred for 10 seconds. Hits against an already Tarred player extend the remaining duration to at least 10 seconds without shortening a longer effect.
+- **Healer:** while alerted to a living target, every 8 seconds heals itself and allied untamed combat creatures within 5 meters for a total of 30% of its maximum health over 4 seconds, in half-second ticks, using the Greydwarf Shaman's heal visual.
+- **Caster:** while alerted to a living player target, fires a Goblin Shaman fireball every 8 seconds. Its base fire damage is 50% of the caster's maximum health before normal damage modifiers.
+- **Shielded:** after 10 seconds without damage, gains a Goblin Shaman shield with health equal to 20% of its maximum health. A sound and blue particles signal a 3-second windup; hits absorbed by a shield and damage-over-time ticks reset the timer and cancel the windup.
+- **Bulwark:** while alerted to a living target, every 15 seconds shields itself and allied untamed combat creatures within 5 meters. Each shield has health equal to 20% of the caster's maximum health. A sound and blue particles signal a 3-second windup; leaving combat cancels it.
+- **Summoner:** while alerted to a living target, every 15 seconds marks spawn positions with evil bone pile particles, then summons zero-star copies of its own enemy type after 2 seconds. Summons have no modifiers or drops, and another cycle cannot start while any summon from the previous cycle is alive.
 
 Volley and Quickshot only roll for prefabs in the `RangedPrefabs` setting under `Enemy Modifiers` in the mod config. Edit the comma-separated prefab IDs to adjust the list; listed enemies still need a projectile attack for these effects to work. `spawn_mod` also rejects these modifiers for prefabs outside the list. Previously saved modifiers remain active if a prefab is later removed from the list.
+
+Enemy shields last up to 40 seconds and do not stack: the shield with the most remaining health is kept. Summoner counts are configured per prefab under `Enemy Modifiers - Summoner`; set a count to zero to disable summoning for that prefab. Saved config values override built-in defaults. If the server cannot confirm that a missing summon was destroyed, the next cycle remains blocked and a warning is logged.
+
+Shielded, Bulwark, and Summoner use the Goblin Shaman's protection cast sound.
+
+The built-in per-prefab defaults for enemies enabled by default are listed in `EnemyModifierSummoner.cs` under `DefaultCounts`. Enemies disabled by default still receive a summon-count config entry with a default of one, so they can be enabled later. Changing a default affects newly generated config entries, not values already saved in a player's config. Counts must be between 0 and 20.
 
 Shared modifiers can also roll on eligible enemies:
 
@@ -64,7 +75,7 @@ Modifier values are not fixed: each one rolls within a range, in steps. Ranges a
 | `movement_penalty` | As for weapons. | Magic weapons |
 | `eitr_cost` | −10% to −20% eitr per attack. | Magic weapons |
 | `eitr_regen` | +15% to +30% eitr regeneration while held. | Magic weapons |
-| `shield_on_use` | 10% to 20% chance to gain the Staff of Protection shield when used; only the user is shielded. | Magic weapons |
+| `shield_on_use` | 10% to 20% chance to gain the Staff of Protection shield for 20 seconds when used; only the user is shielded. | Magic weapons |
 | `aoe_radius` | +25% to +50% area radius. | Magic weapons with an area effect |
 | `magic_extra_projectile` | 10% to 25% chance of an extra projectile. | Elemental magic weapons that fire projectiles |
 | `summon_roots` | 10% to 20% chance to also summon friendly roots from the Staff of the Wild. | Elemental magic weapons |
@@ -117,7 +128,7 @@ spawn_mod Greydwarf fire_infusion poison_infusion
 
 The optional slot targets the equipped item. Supported slots are `weapon`, `bow`, `crossbow`, `magic`, `shield`, `armour`, `helmet`, `chest`, `legs`, and `cape`. Use `armour` only when exactly one armour piece is equipped. If the slot is omitted, the command runs only when exactly one supported item is equipped; otherwise, specify a slot. Modifier compatibility is checked for the selected item, and parry modifiers are unavailable on tower shields.
 
-For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, `shattering`, `regrowth`, `volley`, `quickshot`, `firetread`, and `tarred`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
+For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, `shattering`, `regrowth`, `volley`, `quickshot`, `firetread`, `tarred`, `healer`, `caster`, `shielded`, `bulwark`, and `summoner`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
 
 ## Runes
 

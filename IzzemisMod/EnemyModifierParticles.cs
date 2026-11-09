@@ -6,12 +6,14 @@ namespace Runecarved
     internal sealed class EnemyModifierParticles : MonoBehaviour
     {
         private const string ParticleObjectName = "RunecarvedEnemyModifierParticles";
+        private const string ShieldWindupObjectName = "RunecarvedEnemyShieldWindupParticles";
         private const float SyncInterval = 0.5f;
         private const float EmissionRate = 15f;
         private const int MaxParticles = 45;
         private const float MinParticleSize = 0.03f;
         private const float MaxParticleSize = 0.06f;
         private static readonly Color ParticleColor = new Color(1f, 0.1f, 0.1f, 1f);
+        private static readonly Color ShieldWindupColor = new Color(0.1f, 0.45f, 1f, 1f);
 
         private Character character;
         private CapsuleCollider capsule;
@@ -50,17 +52,31 @@ namespace Runecarved
                 EnemyModifiers.GetModifiers(character).Count == 0)
             {
                 RarityItemParticles.Remove(transform, ParticleObjectName);
+                RarityItemParticles.Remove(transform, ShieldWindupObjectName);
                 return;
             }
 
+            EnsureParticles(ParticleObjectName, ParticleColor);
+            if (ZNet.instance != null && EnemyModifierShields.IsWindingUp(zdo, ZNet.instance.GetTime().Ticks))
+            {
+                EnsureParticles(ShieldWindupObjectName, ShieldWindupColor);
+            }
+            else
+            {
+                RarityItemParticles.Remove(transform, ShieldWindupObjectName);
+            }
+        }
+
+        private void EnsureParticles(string objectName, Color color)
+        {
             float radius = capsule.radius;
             float halfHeight = Mathf.Max(capsule.height * 0.5f, radius);
             ParticleSystem particles = RarityItemParticles.Ensure(
                 transform,
-                ParticleColor,
+                color,
                 capsule.center,
                 1f,
-                ParticleObjectName,
+                objectName,
                 new Vector3(radius, halfHeight, radius));
             if (particles != null)
             {
@@ -75,6 +91,7 @@ namespace Runecarved
         private void OnDestroy()
         {
             RarityItemParticles.Remove(transform, ParticleObjectName);
+            RarityItemParticles.Remove(transform, ShieldWindupObjectName);
         }
     }
 }

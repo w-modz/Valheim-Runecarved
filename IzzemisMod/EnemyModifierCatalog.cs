@@ -152,7 +152,17 @@ namespace Runecarved
                     firetread: true),
                 new EnemyModifierDefinition(
                     "tarred", "$runecarved_enemy_tarred", "Tarred", 1f,
-                    tarred: true)
+                    tarred: true),
+                new EnemyModifierDefinition(
+                    "healer", "$runecarved_enemy_healer", "Healer", 1f),
+                new EnemyModifierDefinition(
+                    "caster", "$runecarved_enemy_caster", "Caster", 1f),
+                new EnemyModifierDefinition(
+                    "shielded", "$runecarved_enemy_shielded", "Shielded", 1f),
+                new EnemyModifierDefinition(
+                    "bulwark", "$runecarved_enemy_bulwark", "Bulwark", 1f),
+                new EnemyModifierDefinition(
+                    "summoner", "$runecarved_enemy_summoner", "Summoner", 1f)
             });
 
         private static readonly Dictionary<string, EnemyModifierDefinition> ById = CreateLookup();

@@ -80,6 +80,10 @@ namespace Runecarved
         private static readonly Dictionary<string, ConfigEntry<bool>> Allowed =
             new Dictionary<string, ConfigEntry<bool>>(StringComparer.Ordinal);
 
+        internal static IEnumerable<string> PrefabNames => Enemies.Keys;
+
+        internal static bool IsEnabledByDefault(string prefab) => Enemies[prefab].DefaultEnabled;
+
         internal static void Bind(ConfigFile config)
         {
             foreach (var enemy in Enemies)

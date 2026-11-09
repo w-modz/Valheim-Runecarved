@@ -21,11 +21,14 @@ namespace Runecarved
             EnemyModifierCatalog.RegisterLocalization(ModLocalization);
             EnemyModifierAllowlist.Bind(Config);
             EnemyModifierRangedList.Bind(Config);
+            EnemyModifierSummoner.Bind(Config);
             new Harmony(PluginGUID).PatchAll();
 
             ModCommands.Register();
             RuneItems.Register();
             EnemyModifierFiretread.Register();
+            EnemyModifierCombatAbilities.Register();
+            EnemySummonIndicator.Register();
             RuneGui.Bind(Config);
             RuneDrops.Bind(Config);
         }
