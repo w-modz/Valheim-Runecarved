@@ -112,6 +112,19 @@ namespace Runecarved
             return view != null && view.IsValid() && view.GetZDO().GetBool(SummonFlag);
         }
 
+        internal static bool IsLootlessSummon(Character character)
+        {
+            return IsSummon(character) || BossModifierSummons.IsBossSummon(character);
+        }
+
+        internal static bool IsConfirmedGone(ZDOID id, long serverId)
+        {
+            bool exists = ZDOMan.instance.GetZDO(id) != null;
+            bool serverChanged = serverId != ZNet.GetUID();
+            bool destroyed = DeadObjects(ZDOMan.instance).ContainsKey(id) || UnseenDestroyed.Contains(id);
+            return EnemyModifierCombatRules.SummonConfirmedGone(serverChanged, exists, destroyed);
+        }
+
         internal static void RegisterRpcs()
         {
             UnseenDestroyed.Clear();
@@ -307,12 +320,9 @@ namespace Runecarved
                 {
                     return;
                 }
-                bool exists = ZDOMan.instance.GetZDO(id) != null;
-                bool serverChanged = parent.GetLong(ServerKey) != ZNet.GetUID();
-                bool destroyed = DeadObjects(ZDOMan.instance).ContainsKey(id) || UnseenDestroyed.Contains(id);
-                if (!EnemyModifierCombatRules.SummonConfirmedGone(serverChanged, exists, destroyed))
+                if (!IsConfirmedGone(id, parent.GetLong(ServerKey)))
                 {
-                    if (!exists)
+                    if (ZDOMan.instance.GetZDO(id) == null)
                     {
                         ZRoutedRpc.instance.InvokeRoutedRPC(sender, ResultRpc, parentId, -cycle);
                     }
@@ -369,6 +379,7 @@ namespace Runecarved
         private static void Postfix()
         {
             EnemyModifierSummoner.RegisterRpcs();
+            BossModifierSummons.RegisterRpcs();
             EnemyModifierCastSound.Register();
         }
 
@@ -388,7 +399,7 @@ namespace Runecarved
     {
         private static void Prefix(Character __instance)
         {
-            if (EnemyModifierSummoner.IsSummon(__instance))
+            if (EnemyModifierSummoner.IsLootlessSummon(__instance))
             {
                 CharacterDrop drop = __instance.GetComponent<CharacterDrop>();
                 if (drop != null)
@@ -405,7 +416,7 @@ namespace Runecarved
     {
         private static bool Prefix(CharacterDrop __instance, ref List<KeyValuePair<GameObject, int>> __result)
         {
-            if (!EnemyModifierSummoner.IsSummon(__instance.GetComponent<Character>()))
+            if (!EnemyModifierSummoner.IsLootlessSummon(__instance.GetComponent<Character>()))
             {
                 return true;
             }
@@ -415,7 +426,7 @@ namespace Runecarved
 
         private static void Postfix(CharacterDrop __instance, List<KeyValuePair<GameObject, int>> __result)
         {
-            if (EnemyModifierSummoner.IsSummon(__instance.GetComponent<Character>()))
+            if (EnemyModifierSummoner.IsLootlessSummon(__instance.GetComponent<Character>()))
             {
                 __result.Clear();
             }

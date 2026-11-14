@@ -248,18 +248,18 @@ namespace Runecarved
             public override string Name => "spawn_mod";
             public override bool IsCheat => true;
             public override string Help =>
-                "Spawns an enemy with one star per modifier. Usage: spawn_mod <prefab> <modifier_id> [modifier_id].";
+                "Spawns an enemy or boss. Usage: spawn_mod <prefab> [modifier_id] [modifier_id]. Bosses roll random modifiers if none are specified.";
 
             public override void Run(string[] args)
             {
-                if (args.Length < 2)
+                if (args.Length < 1)
                 {
                     global::Console.instance.Print(Help);
                     return;
                 }
                 if (args.Length > EnemyModifiers.MaxCommandModifiers + 1)
                 {
-                    global::Console.instance.Print($"A spawned enemy can have at most {EnemyModifiers.MaxCommandModifiers} stars.");
+                    global::Console.instance.Print($"A spawned creature can have at most {EnemyModifiers.MaxCommandModifiers} specified modifiers.");
                     return;
                 }
 
@@ -268,16 +268,12 @@ namespace Runecarved
                 for (int i = 1; i < args.Length; i++)
                 {
                     string id = args[i].Trim().ToLowerInvariant();
-                    if (!EnemyModifierCatalog.TryGet(id, out EnemyModifierDefinition definition) ||
-                        definition.Group == EnemyModifierGroup.Boss)
+                    if (!EnemyModifierCatalog.TryGet(id, out EnemyModifierDefinition definition))
                     {
                         var validIds = new List<string>();
                         foreach (EnemyModifierDefinition option in EnemyModifierCatalog.All)
                         {
-                            if (option.Group != EnemyModifierGroup.Boss)
-                            {
-                                validIds.Add(option.Id);
-                            }
+                            validIds.Add(option.Id);
                         }
                         global::Console.instance.Print($"Unknown enemy modifier '{args[i]}'. Valid IDs: {string.Join(", ", validIds)}.");
                         return;
@@ -306,11 +302,39 @@ namespace Runecarved
                     global::Console.instance.Print($"Prefab '{args[0]}' is not an enabled, eligible untamed networked enemy.");
                     return;
                 }
+                Character prefabCharacter = prefab.GetComponent<Character>();
+                bool boss = prefabCharacter.IsBoss();
+                if (modifiers.Count == 0)
+                {
+                    if (!boss)
+                    {
+                        global::Console.instance.Print(Help);
+                        return;
+                    }
+                    if (!EnemyModifiers.TryRollBossModifiers(out modifiers))
+                    {
+                        global::Console.instance.Print("Could not roll boss modifiers; see the log for details.");
+                        return;
+                    }
+                    foreach (EnemyModifierDefinition modifier in modifiers)
+                    {
+                        ids.Add(modifier.Id);
+                    }
+                }
+                var bossGroups = new HashSet<EnemyModifierGroup>();
                 foreach (EnemyModifierDefinition modifier in modifiers)
                 {
                     if (!EnemyModifiers.IsCompatible(modifier, prefab))
                     {
-                        global::Console.instance.Print($"Enemy modifier '{modifier.Id}' requires a ranged enemy; '{args[0]}' is not in the ranged prefab list.");
+                        string reason = modifier.RequiresRanged && !boss
+                            ? " requires a prefab in the ranged list"
+                            : " is not compatible with this creature";
+                        global::Console.instance.Print($"Modifier '{modifier.Id}'{reason}: '{args[0]}'.");
+                        return;
+                    }
+                    if (boss && !bossGroups.Add(modifier.Group))
+                    {
+                        global::Console.instance.Print("A boss can have at most one boss modifier and one shared modifier.");
                         return;
                     }
                 }
@@ -339,7 +363,8 @@ namespace Runecarved
                     return;
                 }
 
-                global::Console.instance.Print($"Spawned '{args[0]}' with {modifiers.Count} star(s): {string.Join(", ", ids)}.");
+                string description = boss ? "boss modifiers" : $"{modifiers.Count} star(s)";
+                global::Console.instance.Print($"Spawned '{args[0]}' with {description}: {string.Join(", ", ids)}.");
             }
         }
 

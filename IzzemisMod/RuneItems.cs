@@ -227,6 +227,11 @@ namespace Runecarved
         private static Sprite LoadIcon(string prefabName)
         {
             string resource = "Icons." + prefabName.Substring("IzzemisMod_Rune".Length) + ".png";
+            return LoadIconResource(resource);
+        }
+
+        internal static Sprite LoadIconResource(string resource)
+        {
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
             {
                 if (stream == null)
@@ -243,6 +248,8 @@ namespace Runecarved
                     MethodInfo loadImage = imageConversion?.GetMethod("LoadImage", new[] { typeof(Texture2D), typeof(byte[]) });
                     if (loadImage == null || !(bool)loadImage.Invoke(null, new object[] { texture, buffer.ToArray() }))
                     {
+                        Jotunn.Logger.LogWarning($"Could not load icon resource '{resource}'.");
+                        UnityEngine.Object.Destroy(texture);
                         return null;
                     }
 
@@ -252,7 +259,7 @@ namespace Runecarved
         }
 
         // Draws a filled, soft-edged diamond with a darker border on a transparent background.
-        private static Sprite CreatePlaceholderIcon(Color color)
+        internal static Sprite CreatePlaceholderIcon(Color color)
         {
             const int size = 64;
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);

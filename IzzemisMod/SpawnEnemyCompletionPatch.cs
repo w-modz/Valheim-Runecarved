@@ -45,10 +45,18 @@ namespace Runecarved
                 GameObject prefab = ZNetScene.instance != null && parts.Length > 1
                     ? ZNetScene.instance.GetPrefab(parts[1])
                     : null;
+                Character creature = prefab != null ? prefab.GetComponent<Character>() : null;
+                bool boss = creature != null && creature.IsBoss();
+                EnemyModifierDefinition previous = null;
+                if (position == 3)
+                {
+                    EnemyModifierCatalog.TryGet(parts[2].ToLowerInvariant(), out previous);
+                }
                 foreach (EnemyModifierDefinition definition in EnemyModifierCatalog.All)
                 {
-                    if (definition.Group != EnemyModifierGroup.Boss &&
-                        (prefab == null || EnemyModifiers.IsCompatible(definition, prefab)) &&
+                    bool groupAvailable = !boss || previous == null || previous.Group != definition.Group;
+                    if ((prefab == null ? definition.Group != EnemyModifierGroup.Boss :
+                        EnemyModifiers.IsCompatible(definition, prefab)) && groupAvailable &&
                         (position != 3 || !definition.Id.Equals(parts[2], StringComparison.OrdinalIgnoreCase)))
                     {
                         options.Add(definition.Id);

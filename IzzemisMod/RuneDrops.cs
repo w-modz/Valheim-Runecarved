@@ -232,7 +232,7 @@ namespace Runecarved
     {
         private static void Postfix(CharacterDrop __instance, List<KeyValuePair<GameObject, int>> __result)
         {
-            if (__result != null && !EnemyModifierSummoner.IsSummon(__instance.GetComponent<Character>()))
+            if (__result != null && !EnemyModifierSummoner.IsLootlessSummon(__instance.GetComponent<Character>()))
             {
                 var character = __instance.GetComponent<Character>();
                 int stars = character != null ? character.GetLevel() - 1 : 0;

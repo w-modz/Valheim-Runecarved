@@ -112,7 +112,8 @@ namespace Runecarved
 
             // Fire and poison are applied as separate damage-over-time hits by the game.
             bool cloned = false;
-            foreach (EnemyModifierDefinition modifier in EnemyModifiers.GetModifiers(__instance))
+            IReadOnlyList<EnemyModifierDefinition> modifiers = EnemyModifiers.GetModifiers(__instance);
+            foreach (EnemyModifierDefinition modifier in modifiers)
             {
                 if (modifier.ResistanceEffect == null && modifier.DamageTakenMultiplier == 1f)
                 {
@@ -125,6 +126,14 @@ namespace Runecarved
                 }
                 modifier.ResistanceEffect?.Invoke(ref hit.m_damage);
                 hit.m_damage.Modify(modifier.DamageTakenMultiplier);
+            }
+            if (BossModifierScaled.IsProtected(__instance, modifiers))
+            {
+                if (!cloned)
+                {
+                    hit = hit.Clone();
+                }
+                hit.m_damage.Modify(0.5f);
             }
         }
     }
@@ -140,9 +149,14 @@ namespace Runecarved
 
         private static void Postfix(Character __instance, ref float __result)
         {
-            foreach (EnemyModifierDefinition modifier in EnemyModifiers.GetModifiers(__instance))
+            IReadOnlyList<EnemyModifierDefinition> modifiers = EnemyModifiers.GetModifiers(__instance);
+            foreach (EnemyModifierDefinition modifier in modifiers)
             {
                 __result *= modifier.MovementMultiplier;
+            }
+            if (EnemyModifiers.IsFrenzied(__instance, modifiers))
+            {
+                __result *= EnemyModifiers.FrenzyMultiplier;
             }
         }
     }

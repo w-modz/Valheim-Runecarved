@@ -93,6 +93,9 @@ namespace Runecarved
 
     internal static class EnemyModifierCatalog
     {
+        internal const string SunderingId = "sundering";
+        internal const string LegacySunderId = "sunder";
+
         private static readonly IReadOnlyList<EnemyModifierDefinition> Definitions =
             Array.AsReadOnly(new[]
             {
@@ -162,7 +165,19 @@ namespace Runecarved
                 new EnemyModifierDefinition(
                     "bulwark", "$runecarved_enemy_bulwark", "Bulwark", 1f),
                 new EnemyModifierDefinition(
-                    "summoner", "$runecarved_enemy_summoner", "Summoner", 1f)
+                    "summoner", "$runecarved_enemy_summoner", "Summoner", 1f),
+                new EnemyModifierDefinition(
+                    "guarded", "$runecarved_boss_guarded", "Guarded", 1f, group: EnemyModifierGroup.Boss),
+                new EnemyModifierDefinition(
+                    "binding", "$runecarved_boss_binding", "Binding", 1f, group: EnemyModifierGroup.Boss),
+                new EnemyModifierDefinition(
+                    "sentry", "$runecarved_boss_sentry", "Sentry", 1f, group: EnemyModifierGroup.Boss),
+                new EnemyModifierDefinition(
+                    "scaled", "$runecarved_boss_scaled", "Scaled", 1f, group: EnemyModifierGroup.Boss),
+                new EnemyModifierDefinition(
+                    "frenzy", "$runecarved_boss_frenzy", "Frenzy", 1f, group: EnemyModifierGroup.Boss),
+                new EnemyModifierDefinition(
+                    SunderingId, "$runecarved_boss_sundering", "Sundering", 1f, group: EnemyModifierGroup.Boss)
             });
 
         private static readonly Dictionary<string, EnemyModifierDefinition> ById = CreateLookup();

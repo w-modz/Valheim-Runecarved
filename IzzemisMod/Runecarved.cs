@@ -19,6 +19,7 @@ namespace Runecarved
         private void Awake()
         {
             EnemyModifierCatalog.RegisterLocalization(ModLocalization);
+            BossModifierSundering.Register();
             EnemyModifierAllowlist.Bind(Config);
             EnemyModifierRangedList.Bind(Config);
             EnemyModifierSummoner.Bind(Config);
@@ -29,6 +30,7 @@ namespace Runecarved
             EnemyModifierFiretread.Register();
             EnemyModifierCombatAbilities.Register();
             EnemySummonIndicator.Register();
+            BossModifierBinding.Register();
             RuneGui.Bind(Config);
             RuneDrops.Bind(Config);
         }

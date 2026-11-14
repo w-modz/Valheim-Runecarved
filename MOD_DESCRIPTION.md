@@ -41,9 +41,49 @@ Shared modifiers can also roll on eligible enemies:
 - **Armored:** 25% less damage taken, including damage-over-time ticks.
 - **Shattering:** successful damaging hits stagger players, including elemental-only hits. Dodged and fully blocked hits do not trigger it.
 
-Wards and Ironhide multiply the damage remaining after vanilla resistance and armor; Armored multiplies damage at the same stage. These reductions multiply together. A one-star enemy randomly receives one modifier, and a two-star enemy receives two distinct modifiers from the enemy and shared pools. All currently have equal roll weights. Existing rolls are preserved, and eligible creatures gain missing modifiers when the number of stars or the modifier pool increases. Boss-specific rolls are not yet implemented.
+Wards and Ironhide multiply the damage remaining after vanilla resistance and armor; Armored multiplies damage at the same stage. These reductions multiply together. A one-star enemy randomly receives one modifier, and a two-star enemy receives two distinct modifiers from the enemy and shared pools. All currently have equal roll weights. Existing rolls are preserved, and eligible creatures gain missing modifiers when the number of stars or the modifier pool increases.
 
-New modifiers are restricted to the enemy prefabs listed in `EnemyModifierAllowlist.cs`, grouped by biome. The initial list matches the normal rune-drop enemy table, including entries with zero rune-drop weight, and each prefab is enabled by default. Change its `true` or `false` value in that source list to set the default for new configs; existing config entries keep their saved values. In `BepInEx/config/com.izzemi.izzemismod.cfg`, each `Enemy Modifiers - <biome>` section has a `true`/`false` setting per prefab. Unlisted prefabs and bosses cannot receive new modifiers. Disabling a prefab prevents new rolls and `spawn_mod` use but keeps previously assigned modifiers active; excluded enemies do not gain additional modifiers until re-enabled. Tamed creatures and player summons remain ineligible. In multiplayer, use the same settings on all peers: the enemy's network owner controls new rolls.
+New non-boss modifiers are restricted to the enemy prefabs listed in `EnemyModifierAllowlist.cs`, grouped by biome. The initial list matches the normal rune-drop enemy table, including entries with zero rune-drop weight, and each prefab is enabled by default. Change its `true` or `false` value in that source list to set the default for new configs; existing config entries keep their saved values. In `BepInEx/config/com.izzemi.izzemismod.cfg`, each `Enemy Modifiers - <biome>` section has a `true`/`false` setting per prefab. Unlisted non-boss prefabs cannot receive new modifiers. Disabling a prefab prevents new rolls and `spawn_mod` use but keeps previously assigned modifiers active; excluded enemies do not gain additional modifiers until re-enabled. Tamed creatures and player summons remain ineligible. In multiplayer, use the same settings on all peers: the enemy's network owner controls new rolls.
+
+## Boss modifiers
+
+Untamed bosses with combat AI roll one shared modifier and one boss modifier, independently of stars and the enemy allowlist. Their saved rolls remain unchanged, and their names appear beneath the boss healthbar. Bosses do not receive the regular enemy modifier particles.
+
+**Guarded:** while alerted to a living target, every 30 seconds the boss summons enough guards to have up to three alive. Evil bone pile particles mark each spawn location for 2 seconds. Guards spawn with one star below 50% boss health and two stars below 25%; otherwise they have no stars. Starred guards roll modifiers under the normal enemy allowlist, and guards drop no loot or runes. Greylings and drakes are disabled in that allowlist by default. Existing guards retain their stars when the boss loses more health. If the server cannot confirm a missing guard was destroyed, its slot stays occupied.
+
+Guard types are defined in `BossModifierSummons.cs`. When a boss has multiple options, each guard is chosen independently:
+
+| Boss | Guards |
+| --- | --- |
+| Eikthyr | Greylings |
+| The Elder | Greydwarfs |
+| Bonemass | Draugr or Draugr ranged |
+| Moder | Drakes or wolves |
+| Yagluth | Fulings or Fuling archers |
+| The Queen | Seekers |
+| Fader | Charred marksmen or Charred melee |
+
+**Sentry:** while alerted to a living target, every 60 seconds the boss summons one tough enemy if its previous sentry is gone. It uses the same two-second warning, health thresholds, modifier allowlist, loot restriction, and server confirmation as Guarded. Sentry types are defined alongside the guards:
+
+| Boss | Sentry |
+| --- | --- |
+| Eikthyr | Greydwarf Brute |
+| The Elder | Troll |
+| Bonemass | Abomination |
+| Moder | Stone Golem |
+| Yagluth | Fuling Berserker |
+| The Queen | Seeker Soldier |
+| Fader | Fallen Valkyrie |
+
+**Frenzy:** below 40% health, the boss moves 25% faster and deals 25% more attack damage, with a red healing-mead swirl while active. The bonus ends if its health rises to 40% or more. Movement bonuses multiply with Fleeting; attack speed is unchanged.
+
+**Scaled:** the boss takes 50% less damage until a direct melee hit actually reduces its health, with a purple eitr-mead swirl while protected. That hit is reduced too; protection returns 15 seconds after the most recent damaging melee hit. Ranged attacks, damage-over-time ticks, dodged hits, and fully absorbed hits do not reset the timer. Melee hits that only apply delayed fire, poison, or spirit damage do not reset it unless they also deal immediate damage. The reduction also applies to damage-over-time ticks while active and multiplies with shared damage reductions.
+
+**Sundering:** landed boss hits apply Sundered to players for 15 seconds, reducing their total body armor by 50%, including on the triggering hit. This includes fully blocked or shield-absorbed hits; dodged hits do not apply it. Further hits refresh the duration rather than stacking the reduction.
+
+The Sundered icon is currently a placeholder. To replace it, add a square PNG with transparency at `IzzemisMod/Assets/Icons/Sundered.png` and rebuild the mod; 64×64 pixels matches the existing icons.
+
+**Binding:** while alerted to a living target, every 30 seconds the boss selects a random living player within 100 meters. A message warns the selected player, and orange particles follow them for 5 seconds before vines wrap around them and apply the vanilla Immobilized effect for up to 5 seconds. The bound player or other players can attack the binding in front of the player to release them early. Its health is 100 for Eikthyr, 200 for The Elder, 300 for Bonemass, 400 for Moder, 500 for Yagluth, 600 for The Queen, 700 for Fader, and 800 for Frozen King.
 
 ## Modifier pools and value ranges
 
@@ -124,11 +164,14 @@ modifier fire_resistance chest
 remove_modifier fire_resistance chest
 set_rarity 0 chest
 spawn_mod Greydwarf fire_infusion poison_infusion
+spawn_mod Eikthyr
+spawn_mod Eikthyr guarded
+spawn_mod Eikthyr fire_ward
 ```
 
 The optional slot targets the equipped item. Supported slots are `weapon`, `bow`, `crossbow`, `magic`, `shield`, `armour`, `helmet`, `chest`, `legs`, and `cape`. Use `armour` only when exactly one armour piece is equipped. If the slot is omitted, the command runs only when exactly one supported item is equipped; otherwise, specify a slot. Modifier compatibility is checked for the selected item, and parry modifiers are unavailable on tower shields.
 
-For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, `shattering`, `regrowth`, `volley`, `quickshot`, `firetread`, `tarred`, `healer`, `caster`, `shielded`, `bulwark`, and `summoner`. One or two distinct modifiers are required, so spawned enemies have at most two stars. Use Tab to complete enemy prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the enemy as cheat-spawned.
+For `spawn_mod`, modifier IDs include `fire_infusion`, `poison_infusion`, `frost_infusion`, `lightning_infusion`, `fire_ward`, `poison_ward`, `frost_ward`, `lightning_ward`, `blunt_ironhide`, `pierce_ironhide`, `slash_ironhide`, `fleeting`, `armored`, `shattering`, `regrowth`, `volley`, `quickshot`, `firetread`, `tarred`, `healer`, `caster`, `shielded`, `bulwark`, and `summoner`. Non-boss enemies require one or two distinct modifiers and have one star per modifier. For a boss, omit modifiers to roll one shared and one boss modifier, or specify exactly the modifiers wanted: at most one shared and one boss modifier. Boss modifier IDs are `guarded`, `binding`, `sentry`, `scaled`, `frenzy`, and `sundering`; enemy-only modifiers are rejected for bosses, and boss modifiers are rejected for non-bosses. Bosses saved with the former `sunder` ID retain Sundering. The command does not change a boss's level. Use Tab to complete prefabs and modifier IDs. The command uses vanilla's single-object spawn position and marks the creature as cheat-spawned.
 
 ## Runes
 

@@ -8,6 +8,7 @@ namespace Runecarved
     internal static class EnemyModifiers
     {
         internal const int MaxCommandModifiers = 2;
+        internal const float FrenzyMultiplier = 1.25f;
         private const string DataKey = "com.izzemi.runecarved.enemy_modifiers";
         private const string DataVersion = "1:";
         private const int CacheLimit = 256;
@@ -35,7 +36,8 @@ namespace Runecarved
 
         internal static void EnsureRolled(Character character)
         {
-            if (!IsEligible(character) || !EnemyModifierAllowlist.IsAllowed(character.gameObject))
+            if (!IsEligible(character) ||
+                (!character.IsBoss() && !EnemyModifierAllowlist.IsAllowed(character.gameObject)))
             {
                 return;
             }
@@ -47,6 +49,17 @@ namespace Runecarved
             }
 
             ZDO zdo = view.GetZDO();
+            if (character.IsBoss())
+            {
+                if (!zdo.GetString(DataKey, out _))
+                {
+                    if (TryRollBossModifiers(out List<EnemyModifierDefinition> rolled))
+                    {
+                        SaveModifiers(zdo, rolled);
+                    }
+                }
+                return;
+            }
             // Each star beyond level one grants one modifier, up to the catalog size
             int desired = Math.Min(zdo.GetInt(ZDOVars.s_level, 1) - 1, EnemyModifierCatalog.All.Count);
             IReadOnlyList<EnemyModifierDefinition> existing = NoModifiers;
@@ -92,6 +105,11 @@ namespace Runecarved
                 return;
             }
 
+            SaveModifiers(zdo, selected);
+        }
+
+        private static void SaveModifiers(ZDO zdo, List<EnemyModifierDefinition> selected)
+        {
             var ids = new List<string>();
             foreach (EnemyModifierDefinition definition in EnemyModifierCatalog.All)
             {
@@ -107,7 +125,7 @@ namespace Runecarved
         {
             Character character = prefab.GetComponent<Character>();
             ZNetView view = prefab.GetComponent<ZNetView>();
-            return EnemyModifierAllowlist.IsAllowed(prefab) && character != null && !character.IsPlayer() &&
+            return character != null && (character.IsBoss() || EnemyModifierAllowlist.IsAllowed(prefab)) && !character.IsPlayer() &&
                 prefab.GetComponent<MonsterAI>() != null &&
                 character.GetFaction() != Character.Faction.PlayerSpawned &&
                 !Tamed(character) && view != null &&
@@ -116,8 +134,38 @@ namespace Runecarved
 
         internal static bool IsCompatible(EnemyModifierDefinition modifier, GameObject prefab)
         {
-            return modifier.Group != EnemyModifierGroup.Boss &&
+            Character character = prefab.GetComponent<Character>();
+            return character != null &&
+                (character.IsBoss() ? modifier.Group != EnemyModifierGroup.Enemy : modifier.Group != EnemyModifierGroup.Boss) &&
                 (!modifier.RequiresRanged || EnemyModifierRangedList.IsRanged(prefab));
+        }
+
+        internal static bool TryRollBossModifiers(out List<EnemyModifierDefinition> modifiers)
+        {
+            modifiers = new List<EnemyModifierDefinition>();
+            foreach (EnemyModifierGroup group in new[] { EnemyModifierGroup.Boss, EnemyModifierGroup.Shared })
+            {
+                var candidates = new List<EnemyModifierDefinition>();
+                foreach (EnemyModifierDefinition definition in EnemyModifierCatalog.All)
+                {
+                    if (definition.Group == group && definition.Weight > 0f)
+                    {
+                        candidates.Add(definition);
+                    }
+                }
+                if (candidates.Count == 0)
+                {
+                    string error = $"Cannot roll boss modifiers: no positive-weight {group} modifiers.";
+                    if (InvalidDataWarnings.Add(error))
+                    {
+                        Jotunn.Logger.LogError(error);
+                    }
+                    modifiers.Clear();
+                    return false;
+                }
+                modifiers.Add(ChooseWeighted(candidates));
+            }
+            return true;
         }
 
         internal static bool TryAssign(Character character, IReadOnlyList<EnemyModifierDefinition> modifiers, out string error)
@@ -130,7 +178,7 @@ namespace Runecarved
                 error = "The spawned object is not an eligible enemy.";
                 return false;
             }
-            if (!EnemyModifierAllowlist.IsAllowed(character.gameObject))
+            if (!character.IsBoss() && !EnemyModifierAllowlist.IsAllowed(character.gameObject))
             {
                 error = "This enemy prefab is not enabled for enemy modifiers.";
                 return false;
@@ -155,10 +203,11 @@ namespace Runecarved
 
             var ids = new List<string>();
             var unique = new HashSet<string>(StringComparer.Ordinal);
+            var groups = new HashSet<EnemyModifierGroup>();
             foreach (EnemyModifierDefinition modifier in modifiers)
             {
                 if (modifier == null || !EnemyModifierCatalog.TryGet(modifier.Id, out EnemyModifierDefinition known) ||
-                    !ReferenceEquals(modifier, known) || modifier.Group == EnemyModifierGroup.Boss ||
+                    !ReferenceEquals(modifier, known) ||
                     !unique.Add(modifier.Id))
                 {
                     error = "Enemy modifiers must be known and distinct.";
@@ -166,14 +215,22 @@ namespace Runecarved
                 }
                 if (!IsCompatible(modifier, character.gameObject))
                 {
-                    error = $"Enemy modifier '{modifier.Id}' requires a ranged enemy.";
+                    error = $"Modifier '{modifier.Id}' is not compatible with this creature.";
+                    return false;
+                }
+                if (character.IsBoss() && !groups.Add(modifier.Group))
+                {
+                    error = "A boss can have at most one boss modifier and one shared modifier.";
                     return false;
                 }
                 ids.Add(modifier.Id);
             }
 
             view.GetZDO().Set(DataKey, DataVersion + string.Join(",", ids));
-            character.SetLevel(modifiers.Count + 1);
+            if (!character.IsBoss())
+            {
+                character.SetLevel(modifiers.Count + 1);
+            }
             return true;
         }
 
@@ -229,6 +286,23 @@ namespace Runecarved
             return TryParse(data, out ParsedModifiers modifiers) ? modifiers.Known : NoModifiers;
         }
 
+        internal static bool IsFrenzied(Character character, IReadOnlyList<EnemyModifierDefinition> modifiers)
+        {
+            if (character == null || !character.IsBoss() || character.IsDead() ||
+                character.GetHealthPercentage() >= 0.4f)
+            {
+                return false;
+            }
+            foreach (EnemyModifierDefinition modifier in modifiers)
+            {
+                if (modifier.Id == "frenzy")
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private static bool TryParse(string data, out ParsedModifiers modifiers)
         {
             if (ParsedData.TryGetValue(data, out modifiers))
@@ -245,8 +319,10 @@ namespace Runecarved
 
             var ids = new HashSet<string>(StringComparer.Ordinal);
             bool hasUnknown = false;
-            foreach (string id in data.Substring(DataVersion.Length).Split(','))
+            foreach (string savedId in data.Substring(DataVersion.Length).Split(','))
             {
+                string id = savedId == EnemyModifierCatalog.LegacySunderId
+                    ? EnemyModifierCatalog.SunderingId : savedId;
                 if (string.IsNullOrWhiteSpace(id) || !ids.Add(id))
                 {
                     WarnInvalidData($"Unknown or invalid enemy modifier data '{data}'.");
@@ -295,7 +371,7 @@ namespace Runecarved
 
             ZNetView view = NetView(character);
             return view != null && view.IsValid() &&
-                view.GetZDO().GetInt(ZDOVars.s_level, 1) > 1 &&
+                (character.IsBoss() || view.GetZDO().GetInt(ZDOVars.s_level, 1) > 1) &&
                 !character.IsTamed();
         }
 
@@ -306,7 +382,8 @@ namespace Runecarved
                 return;
             }
 
-            IReadOnlyList<EnemyModifierDefinition> modifiers = GetModifiers(hit.GetAttacker());
+            Character attacker = hit.GetAttacker();
+            IReadOnlyList<EnemyModifierDefinition> modifiers = GetModifiers(attacker);
             float originalDamage = hit.m_damage.GetTotalDamage();
             if (originalDamage <= 0f)
             {
@@ -327,6 +404,14 @@ namespace Runecarved
                 }
                 modifier.AttackDamageEffect(ref hit.m_damage, originalDamage);
             }
+            if (IsFrenzied(attacker, modifiers))
+            {
+                if (!cloned)
+                {
+                    hit = hit.Clone();
+                }
+                hit.m_damage.Modify(FrenzyMultiplier);
+            }
         }
     }
 
@@ -336,6 +421,7 @@ namespace Runecarved
         private static void Postfix(Character __instance)
         {
             EnemyModifierShields.Register(__instance);
+            BossModifierBinding.RegisterPlayer(__instance);
             EnemyModifiers.EnsureRolled(__instance);
         }
     }
@@ -361,6 +447,8 @@ namespace Runecarved
             EnemyModifierCombatAbilities.UpdateCaster(__instance);
             EnemyModifierShields.Update(__instance);
             EnemyModifierSummoner.UpdateSummoner(__instance, dt);
+            BossModifierSummons.UpdateSummons(__instance, dt);
+            BossModifierBinding.UpdateBoss(__instance);
         }
     }
 

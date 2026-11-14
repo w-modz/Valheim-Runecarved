@@ -23,7 +23,7 @@ namespace Runecarved
                 "Rune GUI",
                 "OpenKey",
                 KeyCode.H,
-                "Key that opens the rune crafting window.");
+                "Key that opens the rune inscribing window.");
         }
 
         public static void HandleHotkey()
@@ -196,7 +196,7 @@ namespace Runecarved
                 false);
             RectTransform panelRect = (RectTransform)panelObject.transform;
 
-            gui.CreateText("Rune Crafting", panelRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+            gui.CreateText("Rune Inscribing", panelRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -40f), gui.AveriaSerifBold, 48, gui.ValheimOrange, true, Color.black, 700f, 70f, false)
                 .GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
             itemsHeader = gui.CreateText("Item", panelRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),

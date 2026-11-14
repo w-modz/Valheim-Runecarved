@@ -44,11 +44,14 @@ namespace Runecarved
                 return;
             }
 
-            StackStars(gui.transform);
+            if (!c.IsBoss())
+            {
+                StackStars(gui.transform);
+            }
             int row = 0;
             foreach (EnemyModifierDefinition modifier in modifiers)
             {
-                UpdateLabel(gui.transform, health, row++, modifier.DisplayToken);
+                UpdateLabel(gui.transform, health, row++, modifier.DisplayToken, c.IsBoss());
             }
             // Reuse label objects across HUD refreshes and hide any rows left over from a larger modifier set
             for (; row < EnemyModifierCatalog.All.Count; row++)
@@ -61,7 +64,7 @@ namespace Runecarved
             }
         }
 
-        private static void UpdateLabel(Transform gui, Transform health, int row, string token)
+        private static void UpdateLabel(Transform gui, Transform health, int row, string token, bool boss)
         {
             string labelName = LabelName + row;
             Transform existing = health.Find(labelName);
@@ -70,7 +73,7 @@ namespace Runecarved
                 var name = gui.Find("Name").GetComponent<TextMeshProUGUI>();
                 TextMeshProUGUI label = Object.Instantiate(name, health, false);
                 label.name = labelName;
-                label.alignment = TextAlignmentOptions.MidlineLeft;
+                label.alignment = boss ? TextAlignmentOptions.Midline : TextAlignmentOptions.MidlineLeft;
                 label.enableAutoSizing = false;
                 label.fontSize = name.fontSize * 0.8f;
                 label.enableVertexGradient = false;
@@ -79,9 +82,11 @@ namespace Runecarved
                 RectTransform rect = label.rectTransform;
                 rect.anchorMin = new Vector2(0f, 0f);
                 rect.anchorMax = new Vector2(1f, 0f);
-                rect.pivot = new Vector2(0f, 1f);
-                rect.sizeDelta = new Vector2(80f, 20f);
-                rect.anchoredPosition = new Vector2(20f, -2f - row * 16f);
+                rect.pivot = new Vector2(boss ? 0.5f : 0f, 1f);
+                float height = boss ? Mathf.Max(20f, label.fontSize * 1.2f) : 20f;
+                float spacing = boss ? height : 16f;
+                rect.sizeDelta = new Vector2(boss ? 0f : 80f, height);
+                rect.anchoredPosition = new Vector2(boss ? 0f : 20f, -2f - row * spacing);
                 existing = label.transform;
             }
 
@@ -142,7 +147,7 @@ namespace Runecarved
             foreach (DictionaryEntry entry in huds)
             {
                 var character = (Character)entry.Key;
-                if (character == null || character.IsPlayer())
+                if (character == null || character.IsPlayer() || character.IsBoss())
                 {
                     continue;
                 }
