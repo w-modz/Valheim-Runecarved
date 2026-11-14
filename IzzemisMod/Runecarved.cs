@@ -13,7 +13,7 @@ namespace Runecarved
     {
         public const string PluginGUID = "com.izzemi.izzemismod";
         public const string PluginName = "Runecarved";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "1.2.0";
         public static CustomLocalization ModLocalization = LocalizationManager.Instance.GetLocalization();
 
         private void Awake()
