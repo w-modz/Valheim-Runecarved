@@ -4,7 +4,7 @@ Author: Izzemi
 
 Built on the [Jotunn mod stub](https://github.com/Valheim-Modding/JotunnModStub) by the Valheim Modding Community.
 
-Runecarved adds rarity tiers and per-item modifiers to existing Valheim equipment, creating a more varied and unpredictable gear progression.
+Runecarved adds rarity tiers and per-item modifiers to existing Valheim equipment, for a more varied and unpredictable gear progression.
 
 ## AI use disclosure
 This mod was partially created with the assistance of generative AI (GitHub Copilot coding agents). All changes were reviewed and tested by the author. All assets, sprites, models, and artwork were created **without** any AI assistance.
@@ -47,11 +47,10 @@ Requirements: Windows, a Valheim install with BepInEx and [Jötunn](https://valh
 - Custom rune items with unique sprites and models, plus an in-game rune interface for upgrading, rerolling, transferring, and sacrificing equipment; runes can drop from enemies and bosses.
 - Modifier effects cover combat, defense, movement, resource use, ranged attacks, magic, summons, and skills.
 - Persistent item data, modifier and rarity tooltips, rarity visuals, and preservation of item upgrades through crafting.
-- Enabled starred, untamed creatures with combat AI roll unique modifiers displayed under their healthbar and emit red particles. Enemy eligibility is configurable per prefab by biome. Modifiers include elemental infusions and wards, physical resistances, movement speed, damage reduction, and stagger.
+- Enabled starred enemies and bosses roll unique modifiers displayed under their healthbar. Enemy eligibility is configurable per prefab.
 
 For modifier pools, console commands, rune effects, and drop details, see the [mod description](MOD_DESCRIPTION.md).
 
-## Not implemented yet
+## Planned features
 
-- Additional enemy modifiers and modifier-based rewards.
 - Legendary item variants rarely dropped from enemies, each with unique effects.

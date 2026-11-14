@@ -13,6 +13,7 @@ namespace Runecarved
         {
             internal Character Target;
             internal HitData Hit;
+            internal bool ApplySundering;
         }
 
         [ThreadStatic]
@@ -22,6 +23,14 @@ namespace Runecarved
         {
             __state = Current;
             Current = new DamageContext { Target = __instance, Hit = hit };
+        }
+
+        private static void Postfix()
+        {
+            if (Current != null && Current.ApplySundering)
+            {
+                BossModifierSundering.Apply(Current.Target);
+            }
         }
 
         private static Exception Finalizer(DamageContext __state, Exception __exception)

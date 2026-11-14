@@ -84,7 +84,7 @@ namespace Runecarved
             {
                 if (modifier.Id == EnemyModifierCatalog.SunderingId)
                 {
-                    BossModifierSundering.Apply(context.Target);
+                    context.ApplySundering = true;
                     break;
                 }
             }

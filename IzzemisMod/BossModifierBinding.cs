@@ -46,7 +46,7 @@ namespace Runecarved
         private static bool warnedStatus;
         private static bool warnedVineVisual;
         private ZNetView view;
-        private BoxCollider hitbox;
+        private BoxCollider[] hitboxes;
         private Player target;
         private bool statusApplied;
         private bool ignoredTargetCollision;
@@ -77,6 +77,17 @@ namespace Runecarved
             collider.center = new Vector3(0f, 1f, 0f);
             collider.size = new Vector3(1.2f, 2f, 0.3f);
             collider.enabled = false;
+            BoxCollider rear = prefab.AddComponent<BoxCollider>();
+            rear.center = new Vector3(0f, 1f, -1.8f);
+            rear.size = collider.size;
+            rear.enabled = false;
+            foreach (float x in new[] { -0.75f, 0.75f })
+            {
+                BoxCollider side = prefab.AddComponent<BoxCollider>();
+                side.center = new Vector3(x, 1f, -0.9f);
+                side.size = new Vector3(0.3f, 2f, 1.5f);
+                side.enabled = false;
+            }
             prefab.layer = LayerMask.NameToLayer("hitbox");
             prefab.GetComponent<ZNetView>().m_persistent = false;
             prefab.AddComponent<BossModifierBinding>();
@@ -193,7 +204,7 @@ namespace Runecarved
         private void Awake()
         {
             view = GetComponent<ZNetView>();
-            hitbox = GetComponent<BoxCollider>();
+            hitboxes = GetComponents<BoxCollider>();
             if (view != null && view.IsValid())
             {
                 view.Register<HitData>(DamageRpc, RPC_Damage);
@@ -237,13 +248,19 @@ namespace Runecarved
                 zdo.SetPosition(transform.position);
             }
             bool active = elapsed >= WarningSeconds * TimeSpan.TicksPerSecond;
-            hitbox.enabled = active;
+            foreach (BoxCollider hitbox in hitboxes)
+            {
+                hitbox.enabled = active;
+            }
             if (active && !ignoredTargetCollision)
             {
                 Collider targetCollider = target.GetComponent<Collider>();
                 if (targetCollider != null)
                 {
-                    Physics.IgnoreCollision(hitbox, targetCollider);
+                    foreach (BoxCollider hitbox in hitboxes)
+                    {
+                        Physics.IgnoreCollision(hitbox, targetCollider);
+                    }
                     ignoredTargetCollision = true;
                 }
             }
@@ -440,14 +457,21 @@ namespace Runecarved
             List<BoxCollider> hidden = null;
             foreach (BossModifierBinding binding in Instances)
             {
-                if (binding != null && binding.hitbox != null && binding.hitbox.enabled)
+                if (binding == null || binding.hitboxes == null)
                 {
-                    if (hidden == null)
+                    continue;
+                }
+                foreach (BoxCollider hitbox in binding.hitboxes)
+                {
+                    if (hitbox != null && hitbox.enabled)
                     {
-                        hidden = new List<BoxCollider>();
+                        if (hidden == null)
+                        {
+                            hidden = new List<BoxCollider>();
+                        }
+                        hitbox.enabled = false;
+                        hidden.Add(hitbox);
                     }
-                    binding.hitbox.enabled = false;
-                    hidden.Add(binding.hitbox);
                 }
             }
             return hidden;

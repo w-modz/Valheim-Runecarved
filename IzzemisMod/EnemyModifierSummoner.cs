@@ -13,11 +13,17 @@ namespace Runecarved
         private const string IdKey = "runecarved_summon_id_";
         private const string CycleKey = "runecarved_summon_cycle";
         private const string TimeKey = "runecarved_summon_time";
+        private const string WaitingKey = "runecarved_summon_waiting_death";
+        private const string TimingVersionKey = "runecarved_summon_death_timing";
+        private const string SlotsVersionKey = "runecarved_summon_slots_v2";
         private const string PendingKey = "runecarved_summon_pending";
+        private const string PendingSlotKey = "runecarved_summon_pending_slot_";
         private const string PositionKey = "runecarved_summon_position_";
         private const string ServerKey = "runecarved_summon_server";
-        private const string QueryRpc = "Runecarved_SummonQuery";
-        private const string ResultRpc = "Runecarved_SummonResult";
+        private const string SlotServerKey = "runecarved_summon_slot_server_";
+        private const string QueryRpc = "Runecarved_SummonSlotQuery";
+        private const string ResultRpc = "Runecarved_SummonSlotResult";
+        private const int MaxSummons = 20;
         private static readonly Dictionary<string, int> DefaultCounts =
             new Dictionary<string, int>(StringComparer.Ordinal)
         {
@@ -78,6 +84,7 @@ namespace Runecarved
         private static readonly HashSet<ZDOID> UnseenDestroyed = new HashSet<ZDOID>();
         private static readonly AccessTools.FieldRef<ZDOMan, Dictionary<ZDOID, long>> DeadObjects =
             AccessTools.FieldRefAccess<ZDOMan, Dictionary<ZDOID, long>>("m_deadZDOs");
+        private static bool warnedNoServer;
         private float queryDelay;
         private bool warnedUnconfirmed;
 
@@ -93,14 +100,14 @@ namespace Runecarved
                     }
                     defaultCount = 1;
                 }
-                if (defaultCount < 0 || defaultCount > 20)
+                if (defaultCount < 0 || defaultCount > MaxSummons)
                 {
                     throw new InvalidOperationException($"Default summon count for '{prefab}' must be between 0 and 20.");
                 }
                 Counts.Add(prefab, config.Bind(
                     "Enemy Modifiers - Summoner", prefab, defaultCount,
-                    new ConfigDescription("Number of zero-star copies summoned per cycle.",
-                        new AcceptableValueRange<int>(0, 20))));
+                    new ConfigDescription("Maximum number of zero-star summoned copies.",
+                        new AcceptableValueRange<int>(0, MaxSummons))));
             }
         }
 
@@ -128,8 +135,9 @@ namespace Runecarved
         internal static void RegisterRpcs()
         {
             UnseenDestroyed.Clear();
-            ZRoutedRpc.instance.Register<ZDOID, long>(QueryRpc, Query);
-            ZRoutedRpc.instance.Register<ZDOID, long>(ResultRpc, Result);
+            warnedNoServer = false;
+            ZRoutedRpc.instance.Register<ZDOID, int, ZDOID>(QueryRpc, Query);
+            ZRoutedRpc.instance.Register<ZDOID, int, ZDOID, bool>(ResultRpc, Result);
         }
 
         internal static void UpdateSummoner(Character character, float dt)
@@ -155,6 +163,32 @@ namespace Runecarved
             }
             ZDO zdo = view.GetZDO();
             long now = ZNet.instance.GetTime().Ticks;
+            if (!zdo.GetBool(TimingVersionKey))
+            {
+                zdo.Set(WaitingKey, zdo.GetInt(CountKey) > 0 || zdo.GetInt(PendingKey) > 0);
+                zdo.Set(TimingVersionKey, true);
+            }
+            if (!zdo.GetBool(SlotsVersionKey))
+            {
+                int oldCount = zdo.GetInt(CountKey);
+                int pending = zdo.GetInt(PendingKey);
+                for (int i = 0; i < MaxSummons; i++)
+                {
+                    if (i < oldCount)
+                    {
+                        zdo.Set(SlotServerKey + i, zdo.GetLong(ServerKey));
+                    }
+                    else if (zdo.GetZDOID(IdKey + i) != ZDOID.None)
+                    {
+                        zdo.Set(IdKey + i, ZDOID.None);
+                    }
+                    if (i < pending)
+                    {
+                        zdo.Set(PendingSlotKey + i, i);
+                    }
+                }
+                zdo.Set(SlotsVersionKey, true);
+            }
             if (zdo.GetInt(PendingKey) > 0)
             {
                 if (EnemyModifierCombatRules.IntervalElapsed(now, zdo.GetLong(CycleKey), 2))
@@ -162,6 +196,38 @@ namespace Runecarved
                     SpawnPending(character, zdo);
                 }
                 return;
+            }
+            int activeCount = 0;
+            EnemyModifierSummoner tracker = character.GetComponent<EnemyModifierSummoner>();
+            if (tracker == null)
+            {
+                tracker = character.gameObject.AddComponent<EnemyModifierSummoner>();
+            }
+            tracker.queryDelay -= dt;
+            bool query = tracker.queryDelay <= 0f;
+            if (query)
+            {
+                tracker.queryDelay = 3f;
+            }
+            for (int i = 0; i < MaxSummons; i++)
+            {
+                ZDOID id = zdo.GetZDOID(IdKey + i);
+                if (id != ZDOID.None)
+                {
+                    activeCount++;
+                    if (query)
+                    {
+                        ZRoutedRpc.instance.InvokeRoutedRPC(QueryRpc, character.GetZDOID(), i, id);
+                    }
+                }
+            }
+            if (zdo.GetBool(WaitingKey))
+            {
+                if (activeCount > 0)
+                {
+                    return;
+                }
+                zdo.Set(WaitingKey, false);
             }
             BaseAI ai = character.GetBaseAI();
             Character target = ai != null ? ai.GetTargetCreature() : null;
@@ -179,25 +245,10 @@ namespace Runecarved
             {
                 return;
             }
-            if (zdo.GetInt(CountKey) > 0)
-            {
-                EnemyModifierSummoner tracker = character.GetComponent<EnemyModifierSummoner>();
-                if (tracker == null)
-                {
-                    tracker = character.gameObject.AddComponent<EnemyModifierSummoner>();
-                }
-                tracker.queryDelay -= dt;
-                if (tracker.queryDelay <= 0f)
-                {
-                    tracker.queryDelay = 3f;
-                    ZRoutedRpc.instance.InvokeRoutedRPC(QueryRpc, character.GetZDOID(), zdo.GetLong(CycleKey));
-                }
-                return;
-            }
-            BeginSummon(character, zdo, now);
+            BeginSummon(character, zdo, now, activeCount);
         }
 
-        private static void BeginSummon(Character character, ZDO zdo, long now)
+        private static void BeginSummon(Character character, ZDO zdo, long now, int activeCount)
         {
             string name = Utils.GetPrefabName(character.gameObject);
             if (!Counts.TryGetValue(name, out ConfigEntry<int> setting))
@@ -206,9 +257,9 @@ namespace Runecarved
                 zdo.Set(TimeKey, now);
                 return;
             }
-            if (setting.Value == 0)
+            int missing = setting.Value - activeCount;
+            if (missing <= 0)
             {
-                zdo.Set(TimeKey, now);
                 return;
             }
             GameObject prefab = ZNetScene.instance.GetPrefab(name);
@@ -233,23 +284,30 @@ namespace Runecarved
                 return;
             }
             zdo.Set(CycleKey, now);
-            zdo.Set(ServerKey, serverId);
             zdo.Set(TimeKey, now);
             float radius = Mathf.Max(character.GetRadius() + 2f, setting.Value * 0.6f);
             float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
-            for (int i = 0; i < setting.Value; i++)
+            int scheduled = 0;
+            for (int slot = 0; slot < MaxSummons && scheduled < missing; slot++)
             {
-                float currentAngle = angle + i * Mathf.PI * 2f / setting.Value;
+                if (zdo.GetZDOID(IdKey + slot) != ZDOID.None)
+                {
+                    continue;
+                }
+                float currentAngle = angle + scheduled * Mathf.PI * 2f / missing;
                 Vector3 position = character.transform.position +
                     new Vector3(Mathf.Cos(currentAngle), 0f, Mathf.Sin(currentAngle)) * radius;
-                zdo.Set(PositionKey + i, position);
+                zdo.Set(PositionKey + scheduled, position);
+                zdo.Set(PendingSlotKey + scheduled, slot);
                 if (!EnemySummonIndicator.Create(position, now))
                 {
                     Jotunn.Logger.LogError("Summoner canceled the cycle because a spawn indicator could not be created.");
                     return;
                 }
+                scheduled++;
             }
-            zdo.Set(PendingKey, setting.Value);
+            zdo.Set(PendingKey, scheduled);
+            zdo.Set(WaitingKey, true);
             EnemyModifierCastSound.Play(character.transform.position);
         }
 
@@ -264,9 +322,42 @@ namespace Runecarved
                 return;
             }
             int pending = zdo.GetInt(PendingKey);
-            int count = 0;
+            ZNetPeer server = ZNet.instance.GetServerPeer();
+            long serverId = ZNet.instance.IsServer() ? ZNet.GetUID() : (server != null ? server.m_uid : 0L);
+            if (serverId == 0L)
+            {
+                if (!warnedNoServer)
+                {
+                    Jotunn.Logger.LogWarning("Summoner is waiting for a connected server before spawning its summons.");
+                    warnedNoServer = true;
+                }
+                return;
+            }
+            warnedNoServer = false;
+            long now = ZNet.instance.GetTime().Ticks;
+            if (now - zdo.GetLong(CycleKey) > 3 * TimeSpan.TicksPerSecond)
+            {
+                for (int i = 0; i < pending; i++)
+                {
+                    if (!zdo.GetVec3(PositionKey + i, out Vector3 position) ||
+                        !EnemySummonIndicator.IsAvailable || !EnemySummonIndicator.Create(position, now))
+                    {
+                        Jotunn.Logger.LogError("Summoner could not renew a pending spawn indicator.");
+                        zdo.Set(PendingKey, 0);
+                        return;
+                    }
+                }
+                zdo.Set(CycleKey, now);
+                return;
+            }
             for (int i = 0; i < pending; i++)
             {
+                int slot = zdo.GetInt(PendingSlotKey + i);
+                if (slot < 0 || slot >= MaxSummons || zdo.GetZDOID(IdKey + slot) != ZDOID.None)
+                {
+                    Jotunn.Logger.LogError($"Summoner cannot spawn into occupied or invalid slot {slot}.");
+                    continue;
+                }
                 if (!zdo.GetVec3(PositionKey + i, out Vector3 position))
                 {
                     Jotunn.Logger.LogError($"Summoner is missing spawn position {i} for '{name}'.");
@@ -290,47 +381,31 @@ namespace Runecarved
                 }
                 summonView.GetZDO().Set(SummonFlag, true);
                 summon.SetLevel(1);
-                zdo.Set(IdKey + count, summon.GetZDOID());
-                count++;
-                zdo.Set(CountKey, count);
+                zdo.Set(SlotServerKey + slot, serverId);
+                zdo.Set(IdKey + slot, summon.GetZDOID());
             }
             zdo.Set(PendingKey, 0);
         }
 
-        private static void Query(long sender, ZDOID parentId, long cycle)
+        private static void Query(long sender, ZDOID parentId, int slot, ZDOID summonId)
         {
-            if (!ZNet.instance.IsServer())
+            if (!ZNet.instance.IsServer() || slot < 0 || slot >= MaxSummons || summonId == ZDOID.None)
             {
                 return;
             }
             ZDO parent = ZDOMan.instance.GetZDO(parentId);
-            if (parent == null || parent.GetOwner() != sender || parent.GetLong(CycleKey) != cycle)
+            if (parent == null || parent.GetOwner() != sender || parent.GetZDOID(IdKey + slot) != summonId)
             {
                 return;
             }
-            int count = parent.GetInt(CountKey);
-            if (count <= 0 || count > 20)
+            if (IsConfirmedGone(summonId, parent.GetLong(SlotServerKey + slot)))
             {
-                return;
+                ZRoutedRpc.instance.InvokeRoutedRPC(sender, ResultRpc, parentId, slot, summonId, true);
             }
-            for (int i = 0; i < count; i++)
+            else if (ZDOMan.instance.GetZDO(summonId) == null)
             {
-                ZDOID id = parent.GetZDOID(IdKey + i);
-                if (id == ZDOID.None)
-                {
-                    return;
-                }
-                if (!IsConfirmedGone(id, parent.GetLong(ServerKey)))
-                {
-                    if (ZDOMan.instance.GetZDO(id) == null)
-                    {
-                        ZRoutedRpc.instance.InvokeRoutedRPC(sender, ResultRpc, parentId, -cycle);
-                    }
-
-                    return;
-                }
+                ZRoutedRpc.instance.InvokeRoutedRPC(sender, ResultRpc, parentId, slot, summonId, false);
             }
-            ZRoutedRpc.instance.InvokeRoutedRPC(sender, ResultRpc, parentId, cycle);
         }
 
         internal static void RecordUnseenDestruction(ZDOMan manager, ZDOID id)
@@ -341,24 +416,29 @@ namespace Runecarved
             }
         }
 
-        private static void Result(long sender, ZDOID parentId, long cycle)
+        private static void Result(long sender, ZDOID parentId, int slot, ZDOID summonId, bool gone)
         {
             ZNetPeer server = ZNet.instance.GetServerPeer();
             long serverId = ZNet.instance.IsServer() ? ZNet.GetUID() : (server != null ? server.m_uid : 0L);
-            if (sender != serverId || ZNetScene.instance == null)
+            if (serverId == 0L || sender != serverId || slot < 0 || slot >= MaxSummons || ZNetScene.instance == null)
             {
                 return;
             }
-            bool unconfirmed = cycle < 0;
-            if (unconfirmed)
-            {
-                cycle = -cycle;
-            }
             GameObject parent = ZNetScene.instance.FindInstance(parentId);
             ZNetView view = parent != null ? parent.GetComponent<ZNetView>() : null;
-            if (view != null && view.IsValid() && view.IsOwner() && view.GetZDO().GetLong(CycleKey) == cycle)
+            if (view != null && view.IsValid() && view.IsOwner() && view.GetZDO().GetZDOID(IdKey + slot) == summonId)
             {
-                if (unconfirmed)
+                ZDO zdo = view.GetZDO();
+                if (gone)
+                {
+                    if (zdo.GetBool(WaitingKey) && ZNet.instance != null)
+                    {
+                        zdo.Set(TimeKey, ZNet.instance.GetTime().Ticks);
+                        zdo.Set(WaitingKey, false);
+                    }
+                    zdo.Set(IdKey + slot, ZDOID.None);
+                }
+                else
                 {
                     EnemyModifierSummoner tracker = parent.GetComponent<EnemyModifierSummoner>();
                     if (tracker != null && !tracker.warnedUnconfirmed)
@@ -366,9 +446,7 @@ namespace Runecarved
                         tracker.warnedUnconfirmed = true;
                         Jotunn.Logger.LogWarning("Summoner is waiting for the server to confirm a missing summon was destroyed.");
                     }
-                    return;
                 }
-                view.GetZDO().Set(CountKey, 0);
             }
         }
     }

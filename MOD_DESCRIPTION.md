@@ -6,88 +6,9 @@ Runecarved adds rarity tiers and per-item modifiers to existing Valheim equipmen
 
 Rarity limits are **Magic: 1 modifier**, **Rare: 2 modifiers**, and **Epic: 4 modifiers**. Rarity can be changed without losing an item's modifiers as long as the new tier's limit is not exceeded.
 
-## Enemy modifiers
-
-Enabled starred, untamed creatures with combat AI roll unique modifiers, up to one per star, shown beneath their healthbar. Creatures with active modifiers emit red particles. Rolls remain with the creature while it exists. Player summons are excluded, and modifiers are inactive while a creature is tamed. Eligible existing starred creatures receive a roll when they are loaded.
-
-**Fire Infusion**, **Poison Infusion**, **Frost Infusion**, and **Lightning Infusion** each add damage of their respective element equal to 25% of the attack's total damage before blocking and resistances. Each uses the original attack damage, so multiple infusions do not compound.
-
-Enemy-only modifiers:
-
-- **Regrowth:** heals 2% of maximum health per second, including during combat, up to maximum health.
-- **Volley:** fires four extra full-damage projectiles in a spread for every projectile fired by an attack.
-- **Quickshot:** increases attack projectile speed by 50%.
-- **Firetread:** while moving, leaves a 1.5-meter-radius fire patch every 0.25 seconds, using scaled campfire flame visuals. Each patch lasts 8 seconds and hits players once per second for fire damage equal to 10% of the enemy's maximum health before fire resistance and armor. Fire damage is dealt through vanilla burning; if a hit is reduced below vanilla's burning threshold, it deals no damage. Overlapping patches from the same enemy do not stack. Firetread hits are environmental: they do not trigger attack modifiers or enemy difficulty damage scaling.
-- **Tarred:** landed hits on players, including fully blocked hits, apply vanilla Tarred for 10 seconds. Hits against an already Tarred player extend the remaining duration to at least 10 seconds without shortening a longer effect.
-- **Healer:** while alerted to a living target, every 8 seconds heals itself and allied untamed combat creatures within 5 meters for a total of 30% of its maximum health over 4 seconds, in half-second ticks, using the Greydwarf Shaman's heal visual.
-- **Caster:** while alerted to a living player target, fires a Goblin Shaman fireball every 8 seconds. Its base fire damage is 50% of the caster's maximum health before normal damage modifiers.
-- **Shielded:** after 10 seconds without damage, gains a Goblin Shaman shield with health equal to 20% of its maximum health. A sound and blue particles signal a 3-second windup; hits absorbed by a shield and damage-over-time ticks reset the timer and cancel the windup.
-- **Bulwark:** while alerted to a living target, every 15 seconds shields itself and allied untamed combat creatures within 5 meters. Each shield has health equal to 20% of the caster's maximum health. A sound and blue particles signal a 3-second windup; leaving combat cancels it.
-- **Summoner:** while alerted to a living target, every 15 seconds marks spawn positions with evil bone pile particles, then summons zero-star copies of its own enemy type after 2 seconds. Summons have no modifiers or drops, and another cycle cannot start while any summon from the previous cycle is alive.
-
-Volley and Quickshot only roll for prefabs in the `RangedPrefabs` setting under `Enemy Modifiers` in the mod config. Edit the comma-separated prefab IDs to adjust the list; listed enemies still need a projectile attack for these effects to work. `spawn_mod` also rejects these modifiers for prefabs outside the list. Previously saved modifiers remain active if a prefab is later removed from the list.
-
-Enemy shields last up to 40 seconds and do not stack: the shield with the most remaining health is kept. Summoner counts are configured per prefab under `Enemy Modifiers - Summoner`; set a count to zero to disable summoning for that prefab. Saved config values override built-in defaults. If the server cannot confirm that a missing summon was destroyed, the next cycle remains blocked and a warning is logged.
-
-Shielded, Bulwark, and Summoner use the Goblin Shaman's protection cast sound.
-
-The built-in per-prefab defaults for enemies enabled by default are listed in `EnemyModifierSummoner.cs` under `DefaultCounts`. Enemies disabled by default still receive a summon-count config entry with a default of one, so they can be enabled later. Changing a default affects newly generated config entries, not values already saved in a player's config. Counts must be between 0 and 20.
-
-Shared modifiers can also roll on eligible enemies:
-
-- **Fire, Poison, Frost, and Lightning Ward:** 50% less damage from the named element.
-- **Blunt, Pierce, and Slash Ironhide:** 75% less damage from the named physical damage type.
-- **Fleeting:** 25% faster movement, including swimming and flying; attack speed is unchanged.
-- **Armored:** 25% less damage taken, including damage-over-time ticks.
-- **Shattering:** successful damaging hits stagger players, including elemental-only hits. Dodged and fully blocked hits do not trigger it.
-
-Wards and Ironhide multiply the damage remaining after vanilla resistance and armor; Armored multiplies damage at the same stage. These reductions multiply together. A one-star enemy randomly receives one modifier, and a two-star enemy receives two distinct modifiers from the enemy and shared pools. All currently have equal roll weights. Existing rolls are preserved, and eligible creatures gain missing modifiers when the number of stars or the modifier pool increases.
-
-New non-boss modifiers are restricted to the enemy prefabs listed in `EnemyModifierAllowlist.cs`, grouped by biome. The initial list matches the normal rune-drop enemy table, including entries with zero rune-drop weight, and each prefab is enabled by default. Change its `true` or `false` value in that source list to set the default for new configs; existing config entries keep their saved values. In `BepInEx/config/com.izzemi.izzemismod.cfg`, each `Enemy Modifiers - <biome>` section has a `true`/`false` setting per prefab. Unlisted non-boss prefabs cannot receive new modifiers. Disabling a prefab prevents new rolls and `spawn_mod` use but keeps previously assigned modifiers active; excluded enemies do not gain additional modifiers until re-enabled. Tamed creatures and player summons remain ineligible. In multiplayer, use the same settings on all peers: the enemy's network owner controls new rolls.
-
-## Boss modifiers
-
-Untamed bosses with combat AI roll one shared modifier and one boss modifier, independently of stars and the enemy allowlist. Their saved rolls remain unchanged, and their names appear beneath the boss healthbar. Bosses do not receive the regular enemy modifier particles.
-
-**Guarded:** while alerted to a living target, every 30 seconds the boss summons enough guards to have up to three alive. Evil bone pile particles mark each spawn location for 2 seconds. Guards spawn with one star below 50% boss health and two stars below 25%; otherwise they have no stars. Starred guards roll modifiers under the normal enemy allowlist, and guards drop no loot or runes. Greylings and drakes are disabled in that allowlist by default. Existing guards retain their stars when the boss loses more health. If the server cannot confirm a missing guard was destroyed, its slot stays occupied.
-
-Guard types are defined in `BossModifierSummons.cs`. When a boss has multiple options, each guard is chosen independently:
-
-| Boss | Guards |
-| --- | --- |
-| Eikthyr | Greylings |
-| The Elder | Greydwarfs |
-| Bonemass | Draugr or Draugr ranged |
-| Moder | Drakes or wolves |
-| Yagluth | Fulings or Fuling archers |
-| The Queen | Seekers |
-| Fader | Charred marksmen or Charred melee |
-
-**Sentry:** while alerted to a living target, every 60 seconds the boss summons one tough enemy if its previous sentry is gone. It uses the same two-second warning, health thresholds, modifier allowlist, loot restriction, and server confirmation as Guarded. Sentry types are defined alongside the guards:
-
-| Boss | Sentry |
-| --- | --- |
-| Eikthyr | Greydwarf Brute |
-| The Elder | Troll |
-| Bonemass | Abomination |
-| Moder | Stone Golem |
-| Yagluth | Fuling Berserker |
-| The Queen | Seeker Soldier |
-| Fader | Fallen Valkyrie |
-
-**Frenzy:** below 40% health, the boss moves 25% faster and deals 25% more attack damage, with a red healing-mead swirl while active. The bonus ends if its health rises to 40% or more. Movement bonuses multiply with Fleeting; attack speed is unchanged.
-
-**Scaled:** the boss takes 50% less damage until a direct melee hit actually reduces its health, with a purple eitr-mead swirl while protected. That hit is reduced too; protection returns 15 seconds after the most recent damaging melee hit. Ranged attacks, damage-over-time ticks, dodged hits, and fully absorbed hits do not reset the timer. Melee hits that only apply delayed fire, poison, or spirit damage do not reset it unless they also deal immediate damage. The reduction also applies to damage-over-time ticks while active and multiplies with shared damage reductions.
-
-**Sundering:** landed boss hits apply Sundered to players for 15 seconds, reducing their total body armor by 50%, including on the triggering hit. This includes fully blocked or shield-absorbed hits; dodged hits do not apply it. Further hits refresh the duration rather than stacking the reduction.
-
-The Sundered icon is currently a placeholder. To replace it, add a square PNG with transparency at `IzzemisMod/Assets/Icons/Sundered.png` and rebuild the mod; 64×64 pixels matches the existing icons.
-
-**Binding:** while alerted to a living target, every 30 seconds the boss selects a random living player within 100 meters. A message warns the selected player, and orange particles follow them for 5 seconds before vines wrap around them and apply the vanilla Immobilized effect for up to 5 seconds. The bound player or other players can attack the binding in front of the player to release them early. Its health is 100 for Eikthyr, 200 for The Elder, 300 for Bonemass, 400 for Moder, 500 for Yagluth, 600 for The Queen, 700 for Fader, and 800 for Frozen King.
-
 ## Modifier pools and value ranges
 
-Modifier values are not fixed: each one rolls within a range, in steps. Ranges are shown as weakest to strongest. Modifiers marked *fixed* do not roll. Commands default to the strongest value and can exceed the range.
+Modifier values are not fixed: each one rolls within a range, in steps. Ranges are shown as weakest to strongest. Modifiers marked *fixed* have one default value instead of a range. Commands default to the strongest value and can exceed the range.
 
 | Modifier | Range / effect | Equipment |
 | --- | --- | --- |
@@ -139,7 +60,84 @@ Modifier values are not fixed: each one rolls within a range, in steps. Ranges a
 | `thorns` | Deals 20% to 40% of your total body armour as pierce damage to melee attackers. | Armour |
 | `skill_<name>` | +10 to +20 to one skill: axes, blood_magic, bows, clubs, crossbows, elemental_magic, fists, knives, polearms, spears, or swords. | Armour |
 
-Resistance modifiers are separate by damage type. For each type, the strongest resistance on equipped armour applies; resistance does not stack across pieces. Movement-penalty reduction cannot turn an item's penalty into a movement bonus. Stored values are never clamped to the ranges above, so values beyond them (from commands or special runes) are kept when loading.
+Resistance modifiers are separate by damage type. For each type, the strongest resistance on equipped armour applies; resistance does not stack across pieces. Movement-penalty reduction cannot turn an item's penalty into a movement bonus. Stored values are never clamped to the ranges above, so values beyond them (obained from commands or via runes) are kept when loading.
+
+## Enemy modifiers
+
+Enabled starred, untamed creatures with combat AI roll unique modifiers, one per star, shown beneath their healthbar. Creatures with active modifiers emit red particles. Rolls remain with the creature while it exists. Player summons are excluded, and modifiers are inactive while a creature is tamed. Eligible existing starred creatures receive a roll when they are loaded.
+
+**Fire Infusion**, **Poison Infusion**, **Frost Infusion**, and **Lightning Infusion** each add damage of their respective element equal to 25% of the attack's total damage before blocking and resistances. Each uses the base attack damage, so multiple infusions do not compound.
+
+Enemy-only modifiers:
+
+- **Regrowth:** heals 2% of maximum health per second, including during combat, up to maximum health.
+- **Volley:** fires four extra full-damage projectiles in a spread for every projectile fired by an attack.
+- **Quickshot:** increases attack projectile speed by 50%.
+- **Firetread:** while moving, leaves a 1.5-meter-radius fire patch every 0.25 seconds, using scaled campfire flame visuals. Each patch lasts 8 seconds and hits players once per second for fire damage equal to 10% of the enemy's maximum health before fire resistance and armor. Fire damage is dealt through vanilla burning; if a hit is reduced below vanilla's burning threshold, it deals no damage. Overlapping patches from the same enemy do not stack. Firetread hits are environmental: they do not trigger attack modifiers or enemy difficulty damage scaling.
+- **Tarred:** landed hits on players, including fully blocked hits, apply vanilla Tarred for 10 seconds. Hits against an already Tarred player extend the remaining duration to at least 10 seconds without shortening a longer effect.
+- **Healer:** while alerted to a living target, every 8 seconds heals itself and allied untamed combat creatures within 5 meters for a total of 30% of its maximum health over 4 seconds, in half-second ticks, using the Greydwarf Shaman's heal visual.
+- **Caster:** while alerted to a living player target, fires a Goblin Shaman fireball every 8 seconds. Its base fire damage is 50% of the caster's maximum health before normal damage modifiers.
+- **Shielded:** after 10 seconds without damage, gains a Goblin Shaman shield with health equal to 20% of its maximum health. A sound and blue particles signal a 3-second windup; hits absorbed by a shield and damage-over-time ticks reset the timer and cancel the windup.
+- **Bulwark:** while alerted to a living target, every 15 seconds shields itself and allied untamed combat creatures within 5 meters. Each shield has health equal to 20% of the caster's maximum health. A sound and blue particles signal a 3-second windup; leaving combat cancels it.
+- **Summoner:** while alerted to a living target, marks spawn positions with evil bone pile particles, then summons zero-star copies of its own enemy type after 2 seconds, filling missing slots up to its configured limit. The first cycle starts after 15 seconds; subsequent 15-second cooldowns begin when the server confirms the first summon from the previous cycle is gone. Surviving summons remain and count toward the limit. Summons have no modifiers or drops.
+
+Volley and Quickshot only roll for prefabs in the `RangedPrefabs` setting under `Enemy Modifiers` in the mod config. Edit the comma-separated prefab IDs to adjust the list; listed enemies still need a projectile attack for these effects to work. `spawn_mod` also rejects these modifiers for prefabs outside the list. Previously saved modifiers remain active if a prefab is later removed from the list.
+
+Enemy shields last up to 40 seconds and do not stack: the shield with the most remaining health is kept. Summoner counts are configured per prefab under `Enemy Modifiers - Summoner`; set a count to zero to disable summoning for that prefab. Saved config values override built-in defaults. If the server cannot confirm that a missing summon was destroyed, its slot stays occupied and a warning is logged.
+
+Shielded, Bulwark, and Summoner use the Goblin Shaman's protection cast sound.
+
+The built-in per-prefab defaults for enemies enabled by default are listed in `EnemyModifierSummoner.cs` under `DefaultCounts`. Enemies disabled by default still receive a summon-count config entry with a default of one, so they can be enabled later. Changing a default affects newly generated config entries, not values already saved in a player's config. Counts must be between 0 and 20.
+
+Shared modifiers can also roll on eligible enemies:
+
+- **Fire, Poison, Frost, and Lightning Ward:** 50% less damage from the named element.
+- **Blunt, Pierce, and Slash Ironhide:** 75% less damage from the named physical damage type.
+- **Fleeting:** 25% faster movement, including swimming and flying; attack speed is unchanged.
+- **Armored:** 25% less damage taken, including damage-over-time ticks.
+- **Shattering:** successful damaging hits stagger players, including elemental-only hits. Dodged and fully blocked hits do not trigger it.
+
+Wards and Ironhide multiply the damage remaining after vanilla resistance and armor; Armored multiplies damage at the same stage. These reductions multiply together. A one-star enemy randomly receives one modifier, and a two-star enemy receives two distinct modifiers from the enemy and shared pools. All currently have equal roll weights. Existing rolls are preserved, and eligible creatures gain missing modifiers when the number of stars or the modifier pool increases.
+
+New non-boss modifiers are restricted to the enemy prefabs listed in `EnemyModifierAllowlist.cs`, grouped by biome. The initial list matches the normal rune-drop enemy table, including entries with zero rune-drop weight, and each prefab is enabled by default. Change its `true` or `false` value in that source list to set the default for new configs; existing config entries keep their saved values. In `BepInEx/config/com.izzemi.izzemismod.cfg`, each `Enemy Modifiers - <biome>` section has a `true`/`false` setting per prefab. Unlisted non-boss prefabs cannot receive new modifiers. Disabling a prefab prevents new rolls and `spawn_mod` use but keeps previously assigned modifiers active; excluded enemies do not gain additional modifiers until re-enabled. Tamed creatures and player summons remain ineligible. In multiplayer, use the same settings on all peers: the enemy's network owner controls new rolls.
+
+## Boss modifiers
+
+Bosses roll one shared modifier and one boss modifier, independently of stars and the enemy allowlist. Their saved rolls remain unchanged, and their modifiers appear beneath the boss healthbar.
+
+**Guarded:** while alerted to a living target, the boss summons enough guards to have up to three alive. The first cycle starts after 30 seconds; subsequent 30-second cooldowns begin when the server confirms the first guard from the previous cycle is gone. Evil bone pile particles mark each spawn location for 2 seconds. Guards spawn with one star below 50% boss health and two stars below 25%; otherwise they have no stars. Starred guards roll modifiers under the normal enemy allowlist, and guards drop no loot or runes. Greylings and drakes are disabled in that allowlist by default. Existing guards retain their stars when the boss loses more health. If the server cannot confirm a missing guard was destroyed, its slot stays occupied.
+
+Guard types are defined in `BossModifierSummons.cs`. When a boss has multiple options, each guard is chosen independently:
+
+| Boss | Guards |
+| --- | --- |
+| Eikthyr | Greylings |
+| The Elder | Greydwarfs |
+| Bonemass | Draugr or Draugr ranged |
+| Moder | Drakes or wolves |
+| Yagluth | Fulings or Fuling archers |
+| The Queen | Seekers |
+| Fader | Charred marksmen or Charred melee |
+
+**Sentry:** while alerted to a living target, the boss summons one tough enemy. The first cycle starts after 60 seconds; subsequent 60-second cooldowns begin when the server confirms the previous sentry is gone. It uses the same two-second warning, health thresholds, modifier allowlist, loot restriction, and server confirmation as Guarded. Sentry types are defined alongside the guards:
+
+| Boss | Sentry |
+| --- | --- |
+| Eikthyr | Greydwarf Brute |
+| The Elder | Troll |
+| Bonemass | Abomination |
+| Moder | Stone Golem |
+| Yagluth | Fuling Berserker |
+| The Queen | Seeker Soldier |
+| Fader | Fallen Valkyrie |
+
+**Frenzy:** below 40% health, the boss moves 25% faster and deals 25% more attack damage, with a red healing-mead swirl while active. The bonus ends if its health rises to 40% or more. Movement bonuses multiply with Fleeting.
+
+**Scaled:** the boss takes 50% less damage until a damaged with a melee hit, with a purple eitr-mead swirl while protected. That melee hit is reduced too; protection returns 15 seconds after the most recent damaging melee hit. Ranged attacks and damage-over-time ticks do not reset the timer. Melee hits that only apply delayed fire, poison, or spirit damage do not reset it unless they also deal immediate damage. The reduction also applies to damage-over-time ticks while active and multiplies with shared damage reductions.
+
+**Sundering:** boss hits apply Sundered to players for 15 seconds, reducing their total armor by 50% after the triggering hit. This includes fully blocked or shield-absorbed hits. Further hits refresh the duration rather than stacking the reduction; an already active Sundered effect still reduces armor against those hits.
+
+**Binding:** while alerted to a living target, every 30 seconds the boss selects a random living player within 100 meters. A message warns the selected player, and orange particles follow them for 5 seconds before vines wrap around them and apply the Immobilized effect for up to 5 seconds. The bound player or other players can attack the binding from any side to release them early. Its health is 100 for Eikthyr, 200 for The Elder, 300 for Bonemass, 400 for Moder, 500 for Yagluth, 600 for The Queen, 700 for Fader, and 800 for Frozen King.
 
 ## Console commands
 

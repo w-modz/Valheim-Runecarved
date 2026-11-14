@@ -12,6 +12,8 @@ namespace Runecarved
             internal readonly string Name;
             internal readonly string Flag;
             internal readonly string TimeKey;
+            internal readonly string WaitingKey;
+            internal readonly string TimingVersionKey;
             internal readonly string IdKey;
             internal readonly string ServerKey;
             internal readonly string PendingKey;
@@ -31,6 +33,8 @@ namespace Runecarved
                 Flag = flag;
                 string prefix = "runecarved_" + id + "_";
                 TimeKey = prefix + "time";
+                WaitingKey = prefix + "waiting_death";
+                TimingVersionKey = prefix + "death_timing";
                 IdKey = prefix + "id_";
                 ServerKey = prefix + "server_";
                 PendingKey = prefix + "pending_";
@@ -123,6 +127,17 @@ namespace Runecarved
             }
             ZDO zdo = view.GetZDO();
             long now = ZNet.instance.GetTime().Ticks;
+            if (!zdo.GetBool(rule.TimingVersionKey))
+            {
+                bool hasSummons = false;
+                for (int i = 0; i < rule.Limit; i++)
+                {
+                    hasSummons |= zdo.GetZDOID(rule.IdKey + i) != ZDOID.None ||
+                        zdo.GetLong(rule.PendingKey + i) != 0;
+                }
+                zdo.Set(rule.WaitingKey, hasSummons);
+                zdo.Set(rule.TimingVersionKey, true);
+            }
             for (int i = 0; i < rule.Limit; i++)
             {
                 if (EnemyModifierCombatRules.IntervalElapsed(now, zdo.GetLong(rule.PendingKey + i), 2))
@@ -151,6 +166,20 @@ namespace Runecarved
                 }
             }
 
+            if (zdo.GetBool(rule.WaitingKey))
+            {
+                bool hasSummons = false;
+                for (int i = 0; i < rule.Limit; i++)
+                {
+                    hasSummons |= zdo.GetZDOID(rule.IdKey + i) != ZDOID.None ||
+                        zdo.GetLong(rule.PendingKey + i) != 0;
+                }
+                if (hasSummons)
+                {
+                    return;
+                }
+                zdo.Set(rule.WaitingKey, false);
+            }
             BaseAI ai = boss.GetBaseAI();
             Character target = ai != null ? ai.GetTargetCreature() : null;
             if (ai == null || !ai.IsAlerted() || target == null || target.IsDead())
@@ -227,6 +256,7 @@ namespace Runecarved
                 zdo.Set(rule.PositionKey + i, position);
                 zdo.Set(rule.PrefabKey + i, prefabName);
                 zdo.Set(rule.PendingKey + i, now);
+                zdo.Set(rule.WaitingKey, true);
             }
         }
 
@@ -339,7 +369,13 @@ namespace Runecarved
             }
             if (gone)
             {
-                view.GetZDO().Set(rule.IdKey + slot, ZDOID.None);
+                ZDO zdo = view.GetZDO();
+                if (zdo.GetBool(rule.WaitingKey) && ZNet.instance != null)
+                {
+                    zdo.Set(rule.TimeKey, ZNet.instance.GetTime().Ticks);
+                    zdo.Set(rule.WaitingKey, false);
+                }
+                zdo.Set(rule.IdKey + slot, ZDOID.None);
             }
             else
             {

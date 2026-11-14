@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("Copyright © 2026 Izzemi")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
+[assembly: AssemblyMetadata("AI_Assisted_Creation", "This assembly was partially created with the assistance of coding agents.")]
+[assembly: AssemblyMetadata("AI_Model_Vendor", "GitHub Copilot (OpenAI/Anthropic models)")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
